@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from typing import List
+from typing import List, Tuple
 WKT_BEGIN = 'LINESTRING ('
 WKT_END = ')'
 WKT_CRD_SEP = ' '
 WKT_PNT_SEP = ', '
 
-def write_wkt(coords: List[(float, float)], file: str, append=False):
+def write_wkt(coords: List[Tuple[float, float]], file: str, append=False):
     content = ''
     if append:
         content += '\n\n'
