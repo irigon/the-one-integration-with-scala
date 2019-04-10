@@ -12,6 +12,6 @@ These tools allow you to generate all files neccesary for a ScheduledMapRouteMov
 * Then install dependencies:
   * `pip install -r requirements.txt`
 
-## Create a new instance
+## Create a new scenario
 
-`python instance.py test.osm`
+`python scenario.py mymap.osm`
