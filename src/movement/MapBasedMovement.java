@@ -314,7 +314,7 @@ public class MapBasedMovement extends MovementModel implements SwitchableMovemen
 	 * @param nodes The list of nodes to check
 	 * @throws SettingsError if all map nodes are not connected
 	 */
-	private void checkMapConnectedness(List<MapNode> nodes) {
+	protected void checkMapConnectedness(List<MapNode> nodes) {
 		Set<MapNode> visited = new HashSet<MapNode>();
 		Queue<MapNode> unvisited = new LinkedList<MapNode>();
 		MapNode firstNode;
