@@ -108,21 +108,22 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 		Path p = new Path(generateSpeed());
 		MapNode to = route.nextStop();
 		MapNode next = lastMapNode;
-		while (!next.equals(to)) {
+		outer: while (!next.equals(to)) {
 			p.addWaypoint(next.getLocation());
 			List<MapNode> ns = next.getNeighbors();
 			for (MapNode n : ns) {
 				if (n.isType(getOkMapNodeTypes()) && !n.equals(lastWayPoint)) {
 					lastWayPoint = next;
 					next = n;
-					break;
+					continue outer;
 				}
 			}
-			if (next.equals(lastMapNode)) {
-				// last stop on route reached
-				next = lastWayPoint;
-				lastWayPoint = lastMapNode;
-			}
+
+			// end station reached
+            MapNode n = next;
+            next = lastWayPoint;
+            lastWayPoint = n;
+
 		}
 
 		// to reached
@@ -170,4 +171,12 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	public List<MapNode> getStops() {
 		return route.getStops();
 	}
+
+
+	@Override
+	protected void checkMapConnectedness(List<MapNode> nodes) {
+		// map needs not to be connected, since it is combined out of all route maps
+	}
 }
+
+
