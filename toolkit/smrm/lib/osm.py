@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
+from typing import List
 
 class OsmRouteParser:
     doc = []
@@ -37,12 +38,17 @@ class OsmRouteParser:
             waycoords = self.build_waycoords(ways)
             stopcoords = self.build_stopcoords(stops, waycoords)
 
-            routes.append({
-                'name': name,
-                'nodes': waycoords,
-                'stops': stopcoords,
-            })
-            routes_processed.append(name)
+            waycoords = self.adjust_waycoords(
+                waycoords, stopcoords
+            )
+
+            if waycoords:
+                routes.append({
+                    'name': name,
+                    'nodes': waycoords,
+                    'stops': stopcoords,
+                })
+                routes_processed.append(name)
 
         return routes
 
@@ -89,6 +95,27 @@ class OsmRouteParser:
             float(node.attrs['lat']),
             float(node.attrs['lon'])
         )
+
+    @staticmethod
+    def adjust_waycoords(waycoords: List, stopcoords: List):
+        if waycoords[0] == stopcoords[0] and \
+                waycoords[-1] == stopcoords[-1]:
+            return waycoords
+
+        while waycoords[0] != stopcoords[0]:
+            if waycoords[0] in stopcoords:
+                print("Incoherent stop node order. Skiping route.")
+                return []
+            waycoords.pop(0)
+
+        while waycoords[-1] != stopcoords[-1]:
+            if waycoords[-1] in stopcoords:
+                print("Incoherent stop node order. Skiping route.")
+                return []
+            waycoords.pop(-1)
+
+        return waycoords
+
 
     @staticmethod
     def correct_node_order(nodes, next_nodes, index):
