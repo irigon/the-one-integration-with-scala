@@ -10,22 +10,36 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class ScheduledMapRouteControlSystem {
 
 	private int routeType;
-	private List<Path> paths;
+	private List<Path> pathsForward;
+    private List<Path> pathsBackward;
+	private int nrofHostsForward = 0;
+    private int nrofHostsBackward = 0;
+    private ScheduledRouteStop start;
+    private ScheduledRouteStop end;
+    private short nrofStops;
 
 	private final String COMMA_DELIMITER = ",";
+	public final short HOST_DIRECTION_FORWARD = 0;
+    public final short HOST_DIRECTION_BACKWARD = 1;
 
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
 	ScheduledMapRouteControlSystem(String fileName, SimMap map, int okMapType) {
-		paths = new ArrayList<>();
+		pathsForward = new ArrayList<>();
+        pathsBackward = new ArrayList<>();
 		List<ScheduledRouteStop> stops = readStops(fileName, map);
+		start = stops.get(0);
+		end = stops.get(stops.size() - 1);
+		nrofStops = (short) stops.size();
+
 		buildPaths(stops, okMapType);
 
 	}
@@ -69,7 +83,7 @@ class ScheduledMapRouteControlSystem {
 							c.getX()+", "+c.getY()+") is not a valid Map node");
 				}
 
-				int timeTo = Integer.parseInt(columns[1]);
+				int timeTo = Integer.parseInt(columns[1]) * 60;
 				stops.add(new ScheduledRouteStop(node, timeTo));
 			}
 
@@ -104,7 +118,7 @@ class ScheduledMapRouteControlSystem {
 					int timeTo = stops.get(nextStopIdx).timeTo;
 					p.setSpeed(distance / timeTo);
 
-					paths.add(p);
+					pathsForward.add(p);
 					distance = 0;
 					p = new Path();
 
@@ -124,7 +138,21 @@ class ScheduledMapRouteControlSystem {
 				}
 			}
 		}
+		buildBackwardsPaths(pathsForward);
 	}
+
+	private void buildBackwardsPaths(List<Path> pathsForward) {
+	    for (Path p : pathsForward) {
+	        List<Coord> coords = new ArrayList<>(p.getCoords());
+            Collections.reverse(coords);
+            Path p2 = new Path(p.getSpeed());
+            for (Coord c : coords) {
+                p2.addWaypoint(c);
+            }
+            pathsBackward.add(p2);
+        }
+	    Collections.reverse(pathsBackward);
+    }
 
 	private double getDistance(MapNode n1, MapNode n2) {
 		return n1.getLocation().distance(n2.getLocation());
