@@ -7,10 +7,7 @@ package movement;
 import core.Coord;
 import core.Settings;
 import core.SettingsError;
-import movement.map.DijkstraPathFinder;
 import movement.map.MapNode;
-import movement.map.MapRoute;
-import movement.map.SimMap;
 
 import java.util.List;
 
@@ -25,31 +22,16 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 
 	/** Per node group setting used for selecting a route file ({@value}) */
 	public static final String ROUTE_FILE_S = "routeFile";
-	/**
-	 * Per node group setting used for selecting a route's type ({@value}).
-	 * Integer value from {@link MapRoute} class.
-	 */
-	public static final String ROUTE_TYPE_S = "routeType";
 
-	/**
-	 * Per node group setting for selecting which stop (counting from 0 from
-	 * the start of the route) should be the first one. By default, or if a
-	 * negative value is given, a random stop is selected.
-	 */
+    public static final String DIRECTION_S = "direction";
+
 	public static final String ROUTE_FIRST_STOP_S = "routeFirstStop";
 
-	/** Prototype's reference to all routes read for the group */
-	private List<MapRoute> allRoutes = null;
-	/** next route's index to give by prototype */
-	private Integer nextRouteIndex = null;
-	/** Index of the first stop for a group of nodes (or -1 for random) */
-	private int firstStopIndex = -1;
 
-	/** Route of the movement model's instance */
-	private MapRoute route;
-
-	/** The last waypoint of the previous route before stop node */
-	private MapNode lastWayPoint;
+	private ScheduledMapRouteControlSystem system;
+	private short currentStopIndex;
+	private short direction = -1;
+	private short nrofStops;
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
@@ -58,25 +40,21 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	public ScheduledMapRouteMovement(Settings settings) {
 		super(settings);
 		String fileName = settings.getSetting(ROUTE_FILE_S);
-		int type = settings.getInt(ROUTE_TYPE_S);
-		allRoutes = MapRoute.readRoutes(fileName, type, getMap());
-		nextRouteIndex = 0;
 
-		this.route = this.allRoutes.get(this.nextRouteIndex).replicate();
-		if (this.nextRouteIndex >= this.allRoutes.size()) {
-			this.nextRouteIndex = 0;
-		}
+		system = new ScheduledMapRouteControlSystem(
+		        fileName,
+                getMap(),
+                getOkMapNodeTypes()[0]
+        );
+		nrofStops = system.getNrOfStops();
 
-		this.firstStopIndex = 0;
+        if (settings.contains(DIRECTION_S)) {
+            direction = (short) settings.getInt(DIRECTION_S);
+            if (direction != 0 || direction != 1) {
+                throw new SettingsError("Invalid route direction set.");
+            }
+        }
 
-		if (settings.contains(ROUTE_FIRST_STOP_S)) {
-			this.firstStopIndex = settings.getInt(ROUTE_FIRST_STOP_S);
-			if (this.firstStopIndex >= this.route.getNrofStops()) {
-				throw new SettingsError("Too high first stop's index (" +
-						this.firstStopIndex + ") for route with only " +
-						this.route.getNrofStops() + " stops");
-			}
-		}
 	}
 
 	/**
@@ -86,53 +64,27 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	 */
 	protected ScheduledMapRouteMovement(ScheduledMapRouteMovement proto) {
 		super(proto);
-		this.route = proto.allRoutes.get(proto.nextRouteIndex).replicate();
-		this.firstStopIndex = proto.firstStopIndex;
+		this.currentStopIndex = proto.currentStopIndex;
+		this.system = proto.system;
+		this.nrofStops = proto.nrofStops;
 
-		if (firstStopIndex < 0) {
-			/* set a random starting position on the route */
-			this.route.setNextIndex(rng.nextInt(route.getNrofStops()-1));
-		} else {
-			/* use the one defined in the config file */
-			this.route.setNextIndex(this.firstStopIndex);
-		}
-
-		proto.nextRouteIndex++; // give routes in order
-		if (proto.nextRouteIndex >= proto.allRoutes.size()) {
-			proto.nextRouteIndex = 0;
-		}
+		if (proto.direction != -1) {
+		    this.direction = proto.direction;
+        } else {
+            this.direction = system.getInitialDirection();
+        }
 	}
 
-	@Override
-	public Path getPath() {
-		Path p = new Path(generateSpeed());
-		MapNode to = route.nextStop();
-		MapNode next = lastMapNode;
-		outer: while (!next.equals(to)) {
-			p.addWaypoint(next.getLocation());
-			List<MapNode> ns = next.getNeighbors();
-			for (MapNode n : ns) {
-				if (n.isType(getOkMapNodeTypes()) && !n.equals(lastWayPoint)) {
-					lastWayPoint = next;
-					next = n;
-					continue outer;
-				}
-			}
+    @Override
+    public Path getPath() {
+	    if (currentStopIndex == nrofStops - 1) {
+            currentStopIndex = 0;
+            direction = (short)((direction + 1) % 2); // if ping pong
+        }
+        return system.getPath(direction, currentStopIndex++);
+    }
 
-			// end station reached
-            MapNode n = next;
-            next = lastWayPoint;
-            lastWayPoint = n;
-
-		}
-
-		// to reached
-		p.addWaypoint(next.getLocation());
-		lastMapNode = next;
-		return p;
-	}
-
-	@Override
+    @Override
 	public double nextPathAvailable() {
 		return super.nextPathAvailable();
 	}
@@ -142,20 +94,7 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	 */
 	@Override
 	public Coord getInitialLocation() {
-		if (lastMapNode == null) {
-			lastMapNode = route.nextStop();
-		}
-
-		return lastMapNode.getLocation().clone();
-	}
-
-	@Override
-	public Coord getLastLocation() {
-		if (lastMapNode != null) {
-			return lastMapNode.getLocation().clone();
-		} else {
-			return null;
-		}
+		return system.getInitialLocation(direction);
 	}
 
 
@@ -163,15 +102,6 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	public ScheduledMapRouteMovement replicate() {
 		return new ScheduledMapRouteMovement(this);
 	}
-
-	/**
-	 * Returns the list of stops on the route
-	 * @return The list of stops
-	 */
-	public List<MapNode> getStops() {
-		return route.getStops();
-	}
-
 
 	@Override
 	protected void checkMapConnectedness(List<MapNode> nodes) {
