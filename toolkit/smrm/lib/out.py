@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from typing import List, Tuple
+import csv
 WKT_BEGIN_LNSTR = 'LINESTRING ('
 WKT_BEGIN_POINT = 'POINT ('
 WKT_END = ')'
 WKT_CRD_SEP = ' '
 WKT_PNT_SEP = ', '
 
-def write_linestring(coords: List[Tuple[float, float]], file: str, append=False) -> None:
+def write_wkt_linestring(coords: List[Tuple[float, float]], file: str, append=False) -> None:
     content = ''
     if append:
         content += '\n\n'
@@ -22,7 +23,7 @@ def write_linestring(coords: List[Tuple[float, float]], file: str, append=False)
     with open(file, 'a+' if append else 'w+') as fp:
         fp.write(content)
 
-def write_points(coords: List[Tuple[float, float]], file: str, append=False):
+def write_wkt_points(coords: List[Tuple[float, float]], file: str, append=False):
     content = ''
     if append:
         content += '\n\n'
@@ -38,3 +39,11 @@ def write_points(coords: List[Tuple[float, float]], file: str, append=False):
         fp.write(content)
 
 
+def write_csv_stops(stops: List[Tuple[float, float]], file):
+    with open(file, 'w+') as fp:
+        w = csv.writer(fp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for s in stops:
+            w.writerow([
+                '{} {}'.format(s[0], s[1]),
+                5  # min
+            ])
