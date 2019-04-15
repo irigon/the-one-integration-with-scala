@@ -158,4 +158,31 @@ class ScheduledMapRouteControlSystem {
 		return n1.getLocation().distance(n2.getLocation());
 	}
 
+	public Path getPath(short direction, short currentStopIdx) {
+        if (direction == HOST_DIRECTION_BACKWARD)
+            return new Path(pathsBackward.get(currentStopIdx));
+
+        return new Path(pathsForward.get(currentStopIdx));
+    }
+
+	public short getNrOfStops() {
+	    return nrofStops;
+    }
+
+	public short getInitialDirection() {
+	    if (nrofHostsBackward < nrofHostsForward) {
+	        nrofHostsBackward++;
+            return HOST_DIRECTION_BACKWARD;
+        }
+	    nrofHostsForward++;
+	    return HOST_DIRECTION_FORWARD;
+    }
+
+    public Coord getInitialLocation(short direction) {
+	    if (direction == HOST_DIRECTION_BACKWARD) {
+	        return end.node.getLocation().clone();
+        }
+	    return start.node.getLocation().clone();
+    }
+
 }
