@@ -6,6 +6,8 @@ WKT_BEGIN_POINT = 'POINT ('
 WKT_END = ')'
 WKT_CRD_SEP = ' '
 WKT_PNT_SEP = ', '
+CSV_DELIMITER = ','
+CSV_QUOTECHAR = '"'
 
 def write_wkt_linestring(coords: List[Tuple[float, float]], file: str, append=False) -> None:
     content = ''
@@ -39,9 +41,12 @@ def write_wkt_points(coords: List[Tuple[float, float]], file: str, append=False)
         fp.write(content)
 
 
-def write_csv_stops(stops: List[Tuple[float, float]], file):
+def write_csv_stops(stops: List[Tuple[float, float]], file: str):
     with open(file, 'w+') as fp:
-        w = csv.writer(fp, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        w = csv.writer(fp,
+                       delimiter=CSV_DELIMITER,
+                       quotechar=CSV_QUOTECHAR,
+                       quoting=csv.QUOTE_MINIMAL)
         for s in stops:
             w.writerow([
                 '{} {}'.format(s[0], s[1]),
