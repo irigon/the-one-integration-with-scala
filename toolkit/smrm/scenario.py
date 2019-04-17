@@ -94,7 +94,7 @@ def main(osm_file):
     ))
     s.set('Events1.hosts', '{min},{max}'.format(
         min=0,
-        max=len(routes) + len(stations)
+        max=len(routes) + len(stations) - 1
     ))
 
     # write settings contents to file in ONE project root
