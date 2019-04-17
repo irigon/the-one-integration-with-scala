@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
-from typing import List, Tuple
+from typing import List, Tuple, Union, TextIO
 
 class OsmRoute:
     def __init__(self,
@@ -17,8 +17,8 @@ class OsmRouteParser:
     node_index = {}
     way_index = {}
 
-    def __init__(self, fp):
-        self.doc = BeautifulSoup(fp, 'lxml')
+    def __init__(self, markup: Union[str, TextIO]):
+        self.doc = BeautifulSoup(markup, 'lxml')
         self.build_indices()
 
     def build_indices(self):
