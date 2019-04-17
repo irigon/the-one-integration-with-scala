@@ -7,6 +7,7 @@ package movement;
 import core.Coord;
 import core.Settings;
 import core.SettingsError;
+import core.SimClock;
 import movement.map.MapNode;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	private short currentStopIndex;
 	private short direction = -1;
 	private short nrofStops;
+	private double waitTime = 0;
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
@@ -81,12 +83,18 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
             currentStopIndex = 0;
             direction = (short)((direction + 1) % 2); // if ping pong
         }
-        return system.getPath(direction, currentStopIndex++);
+        TimedPath tp = system.getPath(direction, currentStopIndex++);
+	    tp.adjustSpeed(waitTime);
+	    return tp;
     }
 
     @Override
 	public double nextPathAvailable() {
-		return super.nextPathAvailable();
+		// if (currentStopIndex == nrofStops - 1) (at end station)
+		// check schedule for next start
+
+		waitTime = generateWaitTime();
+		return SimClock.getTime() + waitTime;
 	}
 
 	/**
