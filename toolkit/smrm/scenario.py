@@ -15,7 +15,7 @@ STATIONS_FILE = 'stations.wkt'
 def main(osm_file):
     scenario = basename_without_ext(osm_file)
 
-    # read routes (relations with tag[k="type"][v="route"])
+    # read all routes (relations with tag[k="type"][v="route"])
     # from osm file
     with open(osm_file) as fp:
         orp = OsmRouteParser(fp)
@@ -24,12 +24,12 @@ def main(osm_file):
     for r in routes:
         points.extend(r.nodes)
 
-    # initialize projection pane (width, height)
+    # initialize projection pane (width, height in m)
     # from coordinate bounds of all nodes
     proj = Projector(precision=2)
     width, height = proj.init_dimensions(points)
 
-    # switch to one project root and make a dir
+    # switch to ONE project root and make dir
     # for the new scenario in /data
     os.chdir(path.join(PARENT_DIR, PARENT_DIR))
     out_dir = path.join(DATA_DIR, scenario)
@@ -40,7 +40,7 @@ def main(osm_file):
     stops_file = path.join(out_dir, STOPS_FILE)
     stations_file = path.join(out_dir, STATIONS_FILE)
 
-    # create contents of a ONE settings file for this scenario
+    # begin contents of a ONE settings file for this scenario
     s = ScenarioSettings(scenario)
     stations = []
 
@@ -72,8 +72,8 @@ def main(osm_file):
         stations.extend(stops)
 
     # add another group for all stations.
-    # for each station one stationary host will be spawned
-    # to act as a fixed relay node at the platform
+    # in this group, for each station one stationary host
+    # will be spawned to act as a fixed relay node at the platform
     out.write_wkt_points(stations, stations_file)
     g = HostGroup('S')
     g.set('movementModel', 'StationaryMultiPointMovement')
