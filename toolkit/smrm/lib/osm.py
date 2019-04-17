@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
-from typing import List
+from typing import List, Tuple
+
+class OsmRoute:
+    def __init__(self,
+                 name: str,
+                 nodes: List[Tuple[float, float]],
+                 stops: List[Tuple[float, float]]):
+
+        self.name = name
+        self.nodes = nodes
+        self.stops = stops
 
 class OsmRouteParser:
     doc = []
@@ -19,7 +29,7 @@ class OsmRouteParser:
             way.attrs['id']: way for way in self.doc.find_all('way')
         }
 
-    def parse_routes(self):
+    def parse_routes(self) -> List[OsmRoute]:
         relations = self.doc.find_all('relation')
         routes = []
         routes_processed = []
@@ -43,11 +53,7 @@ class OsmRouteParser:
             )
 
             if waycoords:
-                routes.append({
-                    'name': name,
-                    'nodes': waycoords,
-                    'stops': stopcoords,
-                })
+                routes.append(OsmRoute(name, waycoords, stopcoords))
                 routes_processed.append(name)
 
         return routes
