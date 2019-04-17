@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from typing import List
+from typing import List, Union
 
 class HostGroup:
     contents = ''
     okmap = ''
 
-    def __init__(self, gid):
+    def __init__(self, gid: str):
         self.set('groupID', gid)
 
-    def set_okmap(self, map_file):
+    def set_okmap(self, map_file: str):
         self.okmap = map_file
 
-    def set(self, name, val):
+    def set(self, name: str, val: Union[str, int, float]):
         self.contents += 'Group{{nr}}.{name} = {val}\n'.format(
             name=name,
             val=val
@@ -21,7 +21,7 @@ class ScenarioSettings:
     contents = ''
     groups: List[HostGroup] = []
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.set('Scenario.name', name)
 
     def set(self, name, val):
@@ -30,7 +30,7 @@ class ScenarioSettings:
             val=val
         )
 
-    def add_group(self, group):
+    def add_group(self, group: HostGroup):
         self.groups.append(group)
 
     def spacer(self):
@@ -54,6 +54,6 @@ class ScenarioSettings:
         for i, m in enumerate(maps, start=1):
             self.set('MapBasedMovement.mapFile{}'.format(i), m)
 
-    def write(self, filename):
+    def write(self, filename: str):
         with open(filename, 'w+') as fp:
             fp.write(self.contents)
