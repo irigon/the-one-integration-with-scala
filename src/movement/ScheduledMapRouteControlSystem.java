@@ -16,8 +16,8 @@ import java.util.List;
 class ScheduledMapRouteControlSystem {
 
 	private int routeType;
-	private List<Path> pathsForward;
-    private List<Path> pathsBackward;
+	private List<TimedPath> pathsForward;
+    private List<TimedPath> pathsBackward;
 	private int nrofHostsForward = 0;
     private int nrofHostsBackward = 0;
     private ScheduledRouteStop start;
@@ -105,7 +105,7 @@ class ScheduledMapRouteControlSystem {
 		MapNode endStation = stops.get(stops.size() - 1).node;
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
-		Path p = new Path();
+        TimedPath p = new TimedPath();
 
 		nodes:
 		while (!currentNode.equals(endStation)) {
@@ -115,12 +115,13 @@ class ScheduledMapRouteControlSystem {
 				if (n.equals(nextStop)) {
 					p.addWaypoint(n.getLocation());
 					distance += getDistance(currentNode, n);
-					int timeTo = stops.get(nextStopIdx).timeTo;
-					p.setSpeed(distance / timeTo);
+
+					p.setDuration(stops.get(nextStopIdx).timeTo);
+					p.setDistance(distance);
 
 					pathsForward.add(p);
 					distance = 0;
-					p = new Path();
+					p = new TimedPath();
 
 					if (!n.equals(endStation)) {
 						nextStopIdx++;
@@ -141,14 +142,16 @@ class ScheduledMapRouteControlSystem {
 		buildBackwardsPaths(pathsForward);
 	}
 
-	private void buildBackwardsPaths(List<Path> pathsForward) {
-	    for (Path p : pathsForward) {
+	private void buildBackwardsPaths(List<TimedPath> pathsForward) {
+	    for (TimedPath p : pathsForward) {
 	        List<Coord> coords = new ArrayList<>(p.getCoords());
             Collections.reverse(coords);
-            Path p2 = new Path(p.getSpeed());
+            TimedPath p2 = new TimedPath();
             for (Coord c : coords) {
                 p2.addWaypoint(c);
             }
+            p2.setDuration(p.getDuration());
+            p2.setDistance(p.getDistance());
             pathsBackward.add(p2);
         }
 	    Collections.reverse(pathsBackward);
@@ -158,11 +161,11 @@ class ScheduledMapRouteControlSystem {
 		return n1.getLocation().distance(n2.getLocation());
 	}
 
-	public Path getPath(short direction, short currentStopIdx) {
+	public TimedPath getPath(short direction, short currentStopIdx) {
         if (direction == HOST_DIRECTION_BACKWARD)
-            return new Path(pathsBackward.get(currentStopIdx));
+            return new TimedPath(pathsBackward.get(currentStopIdx));
 
-        return new Path(pathsForward.get(currentStopIdx));
+        return new TimedPath(pathsForward.get(currentStopIdx));
     }
 
 	public short getNrOfStops() {
