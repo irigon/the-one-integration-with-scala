@@ -15,7 +15,7 @@ import java.util.List;
 
 class ScheduledMapRouteControlSystem {
 
-	private int routeType;
+	private short routeType;
 	private List<TimedPath> pathsForward;
     private List<TimedPath> pathsBackward;
 	private int nrofHostsForward = 0;
@@ -24,9 +24,17 @@ class ScheduledMapRouteControlSystem {
     private ScheduledRouteStop end;
     private short nrofStops;
 
-	private final String COMMA_DELIMITER = ",";
-	public final short HOST_DIRECTION_FORWARD = 0;
-    public final short HOST_DIRECTION_BACKWARD = 1;
+    /** Type of the route ID: circular ({@value}).
+     * After reaching the last node on path, the next node is the first node */
+    public static final short CIRCULAR = 1;
+    /** Type of the route ID: ping-pong ({@value}).
+     * After last node on path, the direction on path is reversed */
+    public static final short PINGPONG = 2;
+
+    private final String COMMA_DELIMITER = ",";
+    private final short HOST_DIRECTION_FORWARD = 0;
+    private final short HOST_DIRECTION_BACKWARD = 1;
+
 
 
 	/**
@@ -38,10 +46,14 @@ class ScheduledMapRouteControlSystem {
 		List<ScheduledRouteStop> stops = readStops(fileName, map);
 		start = stops.get(0);
 		end = stops.get(stops.size() - 1);
-		nrofStops = (short) stops.size();
 
-		buildPaths(stops, okMapType);
-
+		if (start.equals(end)) {
+		    routeType = CIRCULAR;
+        } else {
+		    routeType = PINGPONG;
+        }
+        nrofStops = (short) stops.size();
+        buildPaths(stops, okMapType);
 	}
 
 	private List<ScheduledRouteStop> readStops(String fileName, SimMap map) {
@@ -168,7 +180,11 @@ class ScheduledMapRouteControlSystem {
         return new TimedPath(pathsForward.get(currentStopIdx));
     }
 
-	public short getNrOfStops() {
+    public short getRouteType() {
+        return routeType;
+    }
+
+    public short getNrOfStops() {
 	    return nrofStops;
     }
 
