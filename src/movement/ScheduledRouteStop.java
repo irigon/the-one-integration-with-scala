@@ -11,4 +11,15 @@ public class ScheduledRouteStop {
         this.node = node;
         this.timeTo = timeTo;
     }
+
+    public boolean equals(ScheduledRouteStop s) {
+        if (s == this) {
+            return true;
+        }
+        else {
+            return s.node.getLocation().equals(
+                    this.node.getLocation()
+            );
+        }
+    }
 }
