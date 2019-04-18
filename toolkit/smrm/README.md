@@ -38,7 +38,8 @@ out body qt;
 ```
 
 You can paste this query at [overpass-turbo](https://overpass-turbo.eu/) to get a preview of the data.
-To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}` with the query code urlescaped
+To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}` with the query code 
+urlencoded or export it via the overpass-turbo website.
 
 Then run the script as
 
