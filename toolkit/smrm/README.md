@@ -19,7 +19,7 @@ These tools allow you to generate all files neccesary for a ScheduledMapRouteMov
 Use the Overpass API to get osm data in xml format.
 You can use this query:
 
-```angular2
+```
 [out:xml][timeout:25];
 // fetch area “Dresden”, 
 // change this to any city you like to query

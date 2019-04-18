@@ -40,51 +40,71 @@ class OsmRouteParser:
             name = self.rel_name(r)
             ways = self.rel_ways(r)
             stops = self.rel_stops(r)
+
             if name in routes_processed or len(ways) < 2:
+                continue
+            if not ways or not stops:
                 continue
 
             print('processing route', name)
 
-            waycoords = self.build_waycoords(ways)
+            first_stop = self.ref(stops[0])
+            way_nodes = self.sort_way_nodes(ways, first_stop)
+
+            waycoords = self.build_waycoords(way_nodes)
             stopcoords = self.build_stopcoords(stops, waycoords)
 
             waycoords = self.adjust_waycoords(
                 waycoords, stopcoords
             )
 
-            if waycoords:
+            if waycoords and stopcoords:
                 routes.append(OsmRoute(name, waycoords, stopcoords))
                 routes_processed.append(name)
 
         return routes
 
-    def build_waycoords(self, ways):
-        waycoords = []
-        for i in range(len(ways) - 1):
-            ref = self.ref(ways[i])
-            way_nodes = self.way_nodes(ref)
-            nextref = self.ref(ways[i + 1])
-            nextway_nodes = self.way_nodes(nextref)
+    def sort_way_nodes(self, ways: List, first_stop):
+        sorted_way_nodes = []
+        first_way, index = self.find_first_way(ways, first_stop)
+        first_way_nodes = self.way_nodes(first_way)
+        if index >= len(first_way_nodes)/2:
+            first_way_nodes.reverse()
 
-            way_nodes = self.correct_node_order(way_nodes, nextway_nodes, -1)
-            waycoords = self.add_waycoords(way_nodes, waycoords)
+        connect = first_way_nodes[-1]
+        sorted_way_nodes.extend(first_way_nodes)
+        ways.remove(first_way)
 
-        # last way
-        lastway_nodes = self.correct_node_order(nextway_nodes, way_nodes, 0)
-        waycoords = self.add_waycoords(lastway_nodes, waycoords)
+        while ways:
+            for w in ways:
+                nodes = self.way_nodes(w)
+                if nodes[0] == connect or nodes[-1] == connect:
+                    if nodes[-1] == connect:
+                        nodes.reverse()
 
-        return waycoords
+                    connect = nodes[-1]
+                    sorted_way_nodes.extend(nodes)
+                    ways.remove(w)
+                    break
+            else:
+                break
 
-    def way_nodes(self, way):
-        return self.way_index.get(way).select('nd')
+        return sorted_way_nodes
 
-    def add_waycoords(self, nodes, existing_coords):
+    def find_first_way(self, ways, first_stop):
+        for w in ways:
+            nodes = self.way_nodes(w)
+            for i, n in enumerate(nodes):
+                if self.ref(n) == first_stop:
+                    return w, i
+
+    def build_waycoords(self, way_nodes):
         coords = []
-        for n in nodes:
+        for n in way_nodes:
             c = self.node_to_coord(n)
-            if c not in existing_coords:
+            if c not in coords:
                 coords.append(c)
-        return existing_coords + coords
+        return coords
 
     def build_stopcoords(self, nodes, waycoords):
         coords = []
@@ -94,6 +114,10 @@ class OsmRouteParser:
                 coords.append(c)
         return coords
 
+    def way_nodes(self, way):
+        ref = self.ref(way)
+        return self.way_index.get(ref).select('nd')
+
     def node_to_coord(self, n):
         ref = self.ref(n)
         node = self.node_index.get(ref)
@@ -102,26 +126,23 @@ class OsmRouteParser:
             float(node.attrs['lon'])
         )
 
-    @staticmethod
-    def adjust_waycoords(waycoords: List, stopcoords: List):
-        if waycoords[0] == stopcoords[0] and \
-                waycoords[-1] == stopcoords[-1]:
-            return waycoords
-
-        while waycoords[0] != stopcoords[0]:
-            if waycoords[0] in stopcoords:
-                print("Incoherent stop node order. Skiping route.")
-                return []
-            waycoords.pop(0)
-
-        while waycoords[-1] != stopcoords[-1]:
-            if waycoords[-1] in stopcoords:
-                print("Incoherent stop node order. Skiping route.")
-                return []
-            waycoords.pop(-1)
-
+    def adjust_waycoords(self, waycoords, stopcoords):
+        if not waycoords or not stopcoords:
+            return []
+        waycoords = self.trim_waycoords(waycoords, stopcoords, start=0)
+        waycoords = self.trim_waycoords(waycoords, stopcoords, start=-1)
         return waycoords
 
+    @staticmethod
+    def trim_waycoords(waycoords, stopcoords, start):
+        while waycoords[start] != stopcoords[start]:
+            if waycoords[start] in stopcoords:
+                print("Incoherent stop node order. Skiping route.")
+                return []
+            waycoords.pop(start)
+            if not waycoords:
+                return []
+        return waycoords
 
     @staticmethod
     def correct_node_order(nodes, next_nodes, index):
@@ -129,11 +150,11 @@ class OsmRouteParser:
             return nodes
 
         nodes.reverse()
-        print('-> reversed way')
+        print('-> reversed way:', nodes[0].parent.attrs['id'])
         if nodes[index] in next_nodes:
             return nodes
 
-        print('inconsistent way')
+        print('! inconsistent way')
         return []
 
     @staticmethod
