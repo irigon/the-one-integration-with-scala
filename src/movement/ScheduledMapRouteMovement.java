@@ -9,7 +9,6 @@ import core.Settings;
 import core.SettingsError;
 import core.SimClock;
 import movement.map.MapNode;
-
 import java.util.List;
 
 /**
@@ -26,11 +25,10 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 
     public static final String DIRECTION_S = "direction";
 
-	public static final String ROUTE_FIRST_STOP_S = "routeFirstStop";
-
 
 	private ScheduledMapRouteControlSystem system;
 	private short currentStopIndex;
+	private short routeType;
 	private short direction = -1;
 	private short nrofStops;
 	private double waitTime = 0;
@@ -48,6 +46,7 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
                 getMap(),
                 getOkMapNodeTypes()[0]
         );
+		routeType = system.getRouteType();
 		nrofStops = system.getNrOfStops();
 
         if (settings.contains(DIRECTION_S)) {
@@ -56,7 +55,6 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
                 throw new SettingsError("Invalid route direction set.");
             }
         }
-
 	}
 
 	/**
@@ -69,6 +67,7 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 		this.currentStopIndex = proto.currentStopIndex;
 		this.system = proto.system;
 		this.nrofStops = proto.nrofStops;
+		this.routeType = proto.routeType;
 
 		if (proto.direction != -1) {
 		    this.direction = proto.direction;
@@ -81,7 +80,9 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
     public Path getPath() {
 	    if (currentStopIndex == nrofStops - 1) {
             currentStopIndex = 0;
-            direction = (short)((direction + 1) % 2); // if ping pong
+            if (routeType == ScheduledMapRouteControlSystem.PINGPONG) {
+                direction = (short) ((direction + 1) % 2);
+            }
         }
         TimedPath tp = system.getPath(direction, currentStopIndex++);
 	    tp.adjustSpeed(waitTime);
