@@ -19,7 +19,7 @@ class HostGroup:
 
 class ScenarioSettings:
     contents = ''
-    groups: List[HostGroup] = []
+    groups = []
 
     def __init__(self, name: str):
         self.set('Scenario.name', name)
