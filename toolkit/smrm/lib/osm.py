@@ -4,11 +4,13 @@ from typing import List, Tuple, Union, TextIO
 
 class OsmRoute:
     def __init__(self,
-                 name: str,
+                 name: str, first: str, last: str,
                  nodes: List[Tuple[float, float]],
                  stops: List[Tuple[float, float]]):
 
         self.name = name
+        self.first = first
+        self.last = last
         self.nodes = nodes
         self.stops = stops
 
@@ -41,7 +43,7 @@ class OsmRouteParser:
             ways = self.rel_ways(r)
             stops = self.rel_stops(r)
 
-            if name in routes_processed or len(ways) < 2:
+            if name in routes_processed:
                 continue
             if not ways or not stops:
                 continue
@@ -49,6 +51,7 @@ class OsmRouteParser:
             print('processing route', name)
 
             first_stop = self.ref(stops[0])
+            last_stop = self.ref(stops[-1])
             way_nodes = self.sort_way_nodes(ways, first_stop)
 
             waycoords = self.build_waycoords(way_nodes)
@@ -59,7 +62,13 @@ class OsmRouteParser:
             )
 
             if waycoords and stopcoords:
-                routes.append(OsmRoute(name, waycoords, stopcoords))
+                routes.append(OsmRoute(
+                    name=name,
+                    first=self.stop_name(first_stop),
+                    last=self.stop_name(last_stop),
+                    nodes=waycoords,
+                    stops=stopcoords,
+                ))
                 routes_processed.append(name)
 
         return routes
@@ -118,6 +127,10 @@ class OsmRouteParser:
         ref = self.ref(way)
         return self.way_index.get(ref).select('nd')
 
+    def stop_name(self, ref):
+        node = self.node_index.get(ref)
+        return self.elem_name(node)
+
     def node_to_coord(self, n):
         ref = self.ref(n)
         node = self.node_index.get(ref)
@@ -145,25 +158,16 @@ class OsmRouteParser:
         return waycoords
 
     @staticmethod
-    def correct_node_order(nodes, next_nodes, index):
-        if nodes[index] in next_nodes:
-            return nodes
-
-        nodes.reverse()
-        print('-> reversed way:', nodes[0].parent.attrs['id'])
-        if nodes[index] in next_nodes:
-            return nodes
-
-        print('! inconsistent way')
-        return []
-
-    @staticmethod
     def ref(tag):
         return tag.attrs['ref']
 
     @staticmethod
     def is_route(r):
         return r.select('tag[k="type"][v="route"]')
+
+    @staticmethod
+    def elem_name(e):
+        return e.select_one('tag[k="name"]').attrs.get('v')
 
     @staticmethod
     def rel_name(r):
