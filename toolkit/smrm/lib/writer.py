@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import List, Tuple
 import csv
+
 WKT_BEGIN_LNSTR = 'LINESTRING ('
 WKT_BEGIN_POINT = 'POINT ('
 WKT_END = ')'
@@ -41,14 +42,23 @@ def write_wkt_points(coords: List[Tuple[float, float]], file: str, append=False)
         fp.write(content)
 
 
-def write_csv_stops(stops: List[Tuple[float, float]], file: str):
+def write_csv_stops(coords: List[Tuple[float, float]], durations: List[int], file: str):
     with open(file, 'w+') as fp:
         w = csv.writer(fp,
                        delimiter=CSV_DELIMITER,
                        quotechar=CSV_QUOTECHAR,
                        quoting=csv.QUOTE_MINIMAL)
-        for s in stops:
+        for i, c in enumerate(coords):
             w.writerow([
-                '{} {}'.format(s[0], s[1]),
-                5  # min
+                '{} {}'.format(c[0], c[1]),
+                durations[i] if durations and len(durations) >= i-1 else None
             ])
+
+def write_csv_schedule(schedule: List, file: str):
+    with open(file, 'w+') as fp:
+        w = csv.writer(fp,
+                       delimiter=CSV_DELIMITER,
+                       quotechar=CSV_QUOTECHAR,
+                       quoting=csv.QUOTE_MINIMAL)
+        w.writerows(schedule or [])
+
