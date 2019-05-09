@@ -14,7 +14,7 @@ STOPS_FILE = '{}_stops.csv'
 SCHEDULE_FILE = '{}_schedule.csv'
 STATIONS_FILE = 'stations.wkt'
 
-def main(osm_file, gtfs_file):
+def main(osm_file, gtfs_file: None):
     scenario = basename_without_ext(osm_file)
 
     # read all routes (relations with tag[k="type"][v="route"])
@@ -33,11 +33,14 @@ def main(osm_file, gtfs_file):
 
     # open GTFS zip, pass the osm routes as reference trips
     # and query the schedules and durations of all routes
-    gtfs = GTFSReader(gtfs_file)
-    ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
-    gtfs.set_ref_trips(ref_routes)
-    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
-    durations = gtfs.trip_durations()
+    schedule = {}
+    durations = {}
+    if gtfs_file:
+        gtfs = GTFSReader(gtfs_file)
+        ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
+        gtfs.set_ref_trips(ref_routes)
+        schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
+        durations = gtfs.trip_durations()
 
     # switch to ONE project root and make dir
     # for the new scenario in /data
@@ -53,7 +56,7 @@ def main(osm_file, gtfs_file):
 
     # begin contents of a ONE settings file for this scenario
     s = ScenarioSettings(scenario)
-    stations = []
+    stations = set()
 
     for r in routes:
         # transform the coordinates from lat,long
@@ -62,7 +65,7 @@ def main(osm_file, gtfs_file):
         stops = proj.transform_coords(r.stops)
 
         name = r.name
-        stations.extend(stops)
+        stations.update(stops)
 
         # for each route, create a host group.
         # this group will contain the moving hosts along the route.
@@ -126,9 +129,10 @@ def main(osm_file, gtfs_file):
     ))
 
     # write settings contents to file in ONE project root
-    s.write('{scenario}_settings.txt'.format(
+    s.write(path.join(one_dir, '{scenario}_settings.txt'.format(
         scenario=scenario
-    ))
+    )))
+
 
 def basename_without_ext(file: str) -> str:
     base = path.basename(file)
@@ -137,8 +141,8 @@ def basename_without_ext(file: str) -> str:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Please give .osm and .zip input files as arguments")
+    if len(sys.argv) < 2:
+        print("Please give .osm (and .zip input files as arguments)")
         sys.exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
