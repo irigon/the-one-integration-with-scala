@@ -9,20 +9,18 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 class ScheduledMapRouteControlSystem {
 
 	private short routeType;
 	private List<TimedPath> pathsForward;
     private List<TimedPath> pathsBackward;
-	private int nrofHostsForward = 0;
-    private int nrofHostsBackward = 0;
-    private ScheduledRouteStop start;
-    private ScheduledRouteStop end;
-    private short nrofStops;
+    private List<ScheduledRouteStop> stops;
+    private volatile TreeMap<Integer, ScheduleService> schedule;
+    private Random r;
 
     /** Type of the route ID: circular ({@value}).
      * After reaching the last node on path, the next node is the first node */
@@ -32,28 +30,27 @@ class ScheduledMapRouteControlSystem {
     public static final short PINGPONG = 2;
 
     private final String COMMA_DELIMITER = ",";
-    private final short HOST_DIRECTION_FORWARD = 0;
-    private final short HOST_DIRECTION_BACKWARD = 1;
-
 
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
-	ScheduledMapRouteControlSystem(String fileName, SimMap map, int okMapType) {
+	ScheduledMapRouteControlSystem(String stopsFile, String scheduleFile, SimMap map, int okMapType) {
 		pathsForward = new ArrayList<>();
         pathsBackward = new ArrayList<>();
-		List<ScheduledRouteStop> stops = readStops(fileName, map);
-		start = stops.get(0);
-		end = stops.get(stops.size() - 1);
+		stops = readStops(stopsFile, map);
+		ScheduledRouteStop start = stops.get(0);
+		ScheduledRouteStop end = stops.get(stops.size() - 1);
 
 		if (start.equals(end)) {
 		    routeType = CIRCULAR;
         } else {
 		    routeType = PINGPONG;
         }
-        nrofStops = (short) stops.size();
+
         buildPaths(stops, okMapType);
+        schedule = readSchedule(scheduleFile);
+        r = new Random();
 	}
 
 	private List<ScheduledRouteStop> readStops(String fileName, SimMap map) {
@@ -98,15 +95,69 @@ class ScheduledMapRouteControlSystem {
 				int timeTo = Integer.parseInt(columns[1]) * 60;
 				stops.add(new ScheduledRouteStop(node, timeTo));
 			}
+			if (stops.size() < 2) {
+				throw new SettingsError("Malformed stops file supplied: " + fileName +
+						"needs at least 2 stops to run simulation");
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NumberFormatException e2) {
+			throw new SettingsError("Malformed stops file supplied: " + fileName +
+					"first column must be two double values, second column int value");
+		}
+
+		return stops;
+	}
+
+	private TreeMap<Integer, ScheduleService> readSchedule(String fileName) {
+		TreeMap<Integer, ScheduleService> schedule = new TreeMap<>();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		Date timeStart = null;
+		try {
+			timeStart = sdf.parse("00:00:00");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		FileReader fr;
+
+		try {
+			fr = new FileReader(fileName);
+		} catch (FileNotFoundException e) {
+			throw new SettingsError("Cannot find schedule file.");
+		}
+		try (BufferedReader br = new BufferedReader(fr)) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] columns = line.split(COMMA_DELIMITER);
+				if (columns.length != 3) {
+					throw new SettingsError("Malformed schedule file supplied, needs 3 columns.");
+				}
+
+				Date time = sdf.parse(columns[0]);
+				long seconds = (time.getTime() - timeStart.getTime()) / 1000;
+
+				schedule.put((int) seconds, new ScheduleService(
+						(int) seconds,			      // start time in seconds
+						Short.parseShort(columns[1]), // first stop index
+						Short.parseShort(columns[2])  // last stop index
+				));
+			}
+
+			if (schedule.isEmpty()) {
+				schedule = null;
+			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NumberFormatException e2) {
 			throw new SettingsError("Malformed stops file supplied, " +
 					"first column must be two double values, second column int value");
+		} catch (java.text.ParseException e) {
+			throw new SettingsError("Can not parse time");
 		}
 
-		return stops;
+		return schedule;
 	}
 
 	private void buildPaths(List<ScheduledRouteStop> stops, int okMapType) {
@@ -166,18 +217,17 @@ class ScheduledMapRouteControlSystem {
             p2.setDistance(p.getDistance());
             pathsBackward.add(p2);
         }
-	    Collections.reverse(pathsBackward);
     }
 
 	private double getDistance(MapNode n1, MapNode n2) {
 		return n1.getLocation().distance(n2.getLocation());
 	}
 
-	public TimedPath getPath(short direction, short currentStopIdx) {
-        if (direction == HOST_DIRECTION_BACKWARD)
-            return new TimedPath(pathsBackward.get(currentStopIdx));
+	public TimedPath nextPath(ScheduleService service) {
+        if (service.isDirectionBackward())
+            return new TimedPath(pathsBackward.get(service.nextStop() - 1));
 
-        return new TimedPath(pathsForward.get(currentStopIdx));
+        return new TimedPath(pathsForward.get(service.nextStop()));
     }
 
     public short getRouteType() {
@@ -185,23 +235,56 @@ class ScheduledMapRouteControlSystem {
     }
 
     public short getNrOfStops() {
-	    return nrofStops;
+	    return (short) stops.size();
     }
 
-	public short getInitialDirection() {
-	    if (nrofHostsBackward < nrofHostsForward) {
-	        nrofHostsBackward++;
-            return HOST_DIRECTION_BACKWARD;
-        }
-	    nrofHostsForward++;
-	    return HOST_DIRECTION_FORWARD;
+    public Coord getInitialLocation(int stopId) {
+	    return stops.get(stopId).node.getLocation().clone();
     }
 
-    public Coord getInitialLocation(short direction) {
-	    if (direction == HOST_DIRECTION_BACKWARD) {
-	        return end.node.getLocation().clone();
-        }
-	    return start.node.getLocation().clone();
-    }
+    public synchronized ScheduleService getInitialService(int time) {
+		if (schedule == null) {
+			return defaultService(time);
+		}
+		int key = schedule.ceilingKey(time);
+		return schedule.remove(key);
+	}
 
+	public synchronized ScheduleService getServiceForStop(int time, int currentStop) {
+		if (schedule == null) {
+			return defaultServiceForStop(time, currentStop);
+		}
+		Integer key = schedule.ceilingKey(time);
+		while (schedule.get(key).getFirstStop() != currentStop) {
+			key = schedule.higherKey(key);
+			if (key == null)
+				return null;
+		}
+		return schedule.remove(key);
+	}
+
+	private ScheduleService defaultService(int time) {
+		if (r.nextBoolean()) {
+			return new ScheduleService(
+					time,
+					(short) 0,
+					(short) (stops.size()-1)
+			);
+		}
+		return new ScheduleService(
+				time,
+				(short) (stops.size()-1),
+				(short) 0
+		);
+
+	}
+
+	private ScheduleService defaultServiceForStop(int time, int currentStop) {
+		int lastStop = currentStop == 0 ? stops.size() -1 : 0;
+		return new ScheduleService(
+				time,
+				(short) currentStop,
+				(short) lastStop
+		);
+	}
 }
