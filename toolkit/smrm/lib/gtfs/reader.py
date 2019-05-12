@@ -73,7 +73,7 @@ class GTFSReader:
                      .apply(lambda ds: [0]+list(ds)[1:])
         return dict(durations)
 
-    def schedule(self, weekday_type: int, max_exceptions: int) -> Dict[str, List[Tuple[str, int, int, int]]]:
+    def schedule(self, weekday_type: int, max_exceptions: int) -> Dict[str, List[Tuple[str, int, int]]]:
         """
         Creates a schedule for each route containing all trips in the form of
         time, start_index, end_index, direction with
@@ -147,14 +147,18 @@ class GTFSReader:
         start_times[STOP_NAME_LAST] = start_times.apply(
             lambda row: index_stops(row, STOP_NAME_LAST), axis=1)
 
+        # in some datasets hour values of arrival_time go beyond 23, eg 24:05:00.
+        # this applies a modulo(24) transform to hours in each row of arrival_time_first.
+        start_times[ARR_TIME_FIRST] = start_times.apply(
+            lambda row: mod_hours(row), axis=1)
+
         start_times = start_times[
             [ROUTE_NAME,
              ARR_TIME_FIRST,
              STOP_NAME_FIRST,
-             STOP_NAME_LAST,
-             DIRECTION_ID_X]
+             STOP_NAME_LAST]
         ].sort_values(
-            [ROUTE_NAME, DIRECTION_ID_X, ARR_TIME_FIRST]
+            [ROUTE_NAME, ARR_TIME_FIRST]
         )
 
         # build output dict
@@ -245,10 +249,20 @@ class GTFSReader:
         ref_trips.sort_values([ROUTE_NAME, SCORE], inplace=True)
         ref_trips.drop_duplicates(ROUTE_NAME, keep='last', inplace=True)
         ref_trips = pd.merge(
-            ref_trips[TRIP_ID],
+            ref_trips[[TRIP_ID, STOPS_SIZE_Y]],
             self.stop_times,
             on=TRIP_ID
         )
+
+        # rebuild stop sequence column to have a consistent enumeration.
+        # (we don't want to rely on the given stop_sequence here,
+        # in some cases the enumberation is 0-based, in some 1-based.
+        ref_trips[STOP_SEQ] = ref_trips.groupby(ROUTE_NAME).cumcount()
+
+        # align ref_trips to given stops size of reference trips
+        # (cut off stops at the end that exceed required stops size)
+        ref_trips = ref_trips[ref_trips[STOP_SEQ] < ref_trips[STOPS_SIZE_Y]]
+        del ref_trips[STOPS_SIZE_Y]
         self.ref_trips = ref_trips
 
     # filter by days, 0: weekdays, 1: saturdays, 2: sundays
@@ -272,7 +286,7 @@ class GTFSReader:
                     (weekday_type == 2) &
                     (s[SUN] == 1)
             )
-            ]
+        ]
 
     # filter by exeption count
     def __filter_exceptions(self, services: DataFrame, days_treshold: int) -> DataFrame:
@@ -315,9 +329,19 @@ class GTFSReader:
 
 def index_stops(row, col):
     i = row[STOP_NAME].index(row[col])
-    if row[DIRECTION_ID_X] != row[DIRECTION_ID_Y]:
-        i = len(row[STOP_NAME]) - i - 1
+    # if row[DIRECTION_ID_X] != row[DIRECTION_ID_Y]:
+    #     i = len(row[STOP_NAME]) - i - 1
     return i
+
+def mod_hours(row):
+    t = row[ARR_TIME_FIRST]
+    h = int(t.split(':')[0])
+    if h > 23:
+        t = ':'.join(
+            [str(h % 24).zfill(2)] +
+            t.split(':')[1:]
+        )
+    return t
 
 def distance(s1, s2):
     maxlen = max(len(s1), len(s2))
