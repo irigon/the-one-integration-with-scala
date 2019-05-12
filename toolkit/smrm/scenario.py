@@ -73,6 +73,7 @@ def main(osm_file, gtfs_file: None):
         g = HostGroup(name)
         g.set('movementModel', 'ScheduledMapRouteMovement')
         g.set('routeFile', stops_file.format(name))
+        g.set('scheduleFile', schedule_file.format(name))
         g.set('routeType', 2)
         g.set('nrofHosts', 1)
         g.set_okmap(nodes_file.format(name))
