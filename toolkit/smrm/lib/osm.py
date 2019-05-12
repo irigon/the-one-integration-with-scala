@@ -61,7 +61,11 @@ class OsmRouteParser:
                 waycoords, stopcoords
             )
 
-            if waycoords and stopcoords:
+            if len(stopcoords) < 2:
+                print("- ignoring route", name, ": less than 2 stops could be parsed")
+                continue
+
+            if waycoords:
                 routes.append(OsmRoute(
                     name=name,
                     first=self.stop_name(first_stop),
