@@ -6,7 +6,6 @@ package movement;
 
 import core.Coord;
 import core.Settings;
-import core.SettingsError;
 import core.SimClock;
 import movement.map.MapNode;
 import java.util.List;
@@ -23,15 +22,14 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	/** Per node group setting used for selecting a route file ({@value}) */
 	public static final String ROUTE_FILE_S = "routeFile";
 
-    public static final String DIRECTION_S = "direction";
-
+	/** Per node group schedule containing route time information */
+	public static final String SCHEDULE_FILE_S = "scheduleFile";
 
 	private ScheduledMapRouteControlSystem system;
 	private short currentStopIndex;
 	private short routeType;
-	private short direction = -1;
-	private short nrofStops;
 	private double waitTime = 0;
+	private ScheduleService currentService;
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
@@ -39,22 +37,17 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	 */
 	public ScheduledMapRouteMovement(Settings settings) {
 		super(settings);
-		String fileName = settings.getSetting(ROUTE_FILE_S);
+		String stopsFile = settings.getSetting(ROUTE_FILE_S);
+		String scheduleFile = settings.getSetting(SCHEDULE_FILE_S);
 
 		system = new ScheduledMapRouteControlSystem(
-		        fileName,
+				stopsFile,
+				scheduleFile,
                 getMap(),
                 getOkMapNodeTypes()[0]
         );
 		routeType = system.getRouteType();
-		nrofStops = system.getNrOfStops();
 
-        if (settings.contains(DIRECTION_S)) {
-            direction = (short) settings.getInt(DIRECTION_S);
-            if (direction != 0 || direction != 1) {
-                throw new SettingsError("Invalid route direction set.");
-            }
-        }
 	}
 
 	/**
@@ -66,34 +59,33 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 		super(proto);
 		this.currentStopIndex = proto.currentStopIndex;
 		this.system = proto.system;
-		this.nrofStops = proto.nrofStops;
 		this.routeType = proto.routeType;
-
-		if (proto.direction != -1) {
-		    this.direction = proto.direction;
-        } else {
-            this.direction = system.getInitialDirection();
-        }
 	}
 
     @Override
     public Path getPath() {
-	    if (currentStopIndex == nrofStops - 1) {
-            currentStopIndex = 0;
-            if (routeType == ScheduledMapRouteControlSystem.PINGPONG) {
-                direction = (short) ((direction + 1) % 2);
-            }
-        }
-        TimedPath tp = system.getPath(direction, currentStopIndex++);
+        TimedPath tp = system.nextPath(currentService);
 	    tp.adjustSpeed(waitTime);
 	    return tp;
     }
 
     @Override
 	public double nextPathAvailable() {
-		// if (currentStopIndex == nrofStops - 1) (at end station)
-		// check schedule for next start
-
+		if (currentService.atFirstStop()) {
+			waitTime = 0;
+			return currentService.getStartTime();
+		}
+		if (currentService.atLastStop()) {
+			currentService = system.getServiceForStop(
+					(int) SimClock.getTime(),
+					currentService.getCurrentStop()
+			);
+			waitTime = 0;
+			// When no more services from this stop exist, halt here.
+			if (currentService == null)
+				return Double.MAX_VALUE;
+			return currentService.getStartTime();
+		}
 		waitTime = generateWaitTime();
 		return SimClock.getTime() + waitTime;
 	}
@@ -103,9 +95,9 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	 */
 	@Override
 	public Coord getInitialLocation() {
-		return system.getInitialLocation(direction);
+		currentService = system.getInitialService((int) SimClock.getTime());
+		return system.getInitialLocation(currentService.getFirstStop());
 	}
-
 
 	@Override
 	public ScheduledMapRouteMovement replicate() {
