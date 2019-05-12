@@ -18,6 +18,7 @@ class OsmRouteParser:
     doc = []
     node_index = {}
     way_index = {}
+    rel_index = {}
 
     def __init__(self, markup: Union[str, TextIO]):
         self.doc = BeautifulSoup(markup, 'lxml')
@@ -30,21 +31,30 @@ class OsmRouteParser:
         self.way_index = {
             way.attrs['id']: way for way in self.doc.find_all('way')
         }
+        self.rel_index = self.build_rel_index()
+
+    def build_rel_index(self):
+        rel_index = {}
+        for r in self.doc.find_all('relation'):
+            if not self.is_route(r): continue
+            n = self.rel_name(r)
+            rel_index[n] = rel_index.get(n, []) + [r]
+        return rel_index
 
     def parse_routes(self) -> List[OsmRoute]:
-        relations = self.doc.find_all('relation')
+        route_names = self.rel_index.keys()
         routes = []
         routes_processed = []
 
-        for r in relations:
-            if not self.is_route(r):
+        for name in route_names:
+            if name in routes_processed:
                 continue
-            name = self.rel_name(r)
+
+            name_routes = self.rel_index[name]
+            r = self.longest_route(name_routes)
             ways = self.rel_ways(r)
             stops = self.rel_stops(r)
 
-            if name in routes_processed:
-                continue
             if not ways or not stops:
                 continue
 
@@ -76,6 +86,11 @@ class OsmRouteParser:
                 routes_processed.append(name)
 
         return routes
+
+    def longest_route(self, routes):
+        stop_counts = [len(self.rel_stops(r)) for r in routes]
+        idx = stop_counts.index(max(stop_counts))
+        return routes[idx]
 
     def sort_way_nodes(self, ways: List, first_stop):
         sorted_way_nodes = []
@@ -161,6 +176,9 @@ class OsmRouteParser:
                 return []
         return waycoords
 
+    def rel_by_name(self, name):
+        return [r.parent for r in self.doc.select('relation tag[k="ref"][v="'+name+'"]')]
+
     @staticmethod
     def ref(tag):
         return tag.attrs['ref']
@@ -175,7 +193,10 @@ class OsmRouteParser:
 
     @staticmethod
     def rel_name(r):
-        return r.select_one('tag[k="ref"]').attrs.get('v')
+        t = r.select_one('tag[k="ref"]')
+        if t:
+            return t.attrs.get('v')
+        return None
 
     @staticmethod
     def rel_ways(r):
