@@ -5,8 +5,8 @@ class HostGroup:
     contents = ''
     okmap = ''
 
-    def __init__(self, gid: str):
-        self.set('groupID', gid)
+    def __init__(self, gid: str, delim: str = ''):
+        self.set('groupID', gid + delim)
 
     def set_okmap(self, map_file: str):
         self.okmap = map_file

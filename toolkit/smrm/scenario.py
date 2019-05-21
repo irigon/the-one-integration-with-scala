@@ -14,6 +14,7 @@ STOPS_FILE = '{}_stops.csv'
 SCHEDULE_FILE = '{}_schedule.csv'
 STATIONS_FILE = 'stations.wkt'
 NR_OF_HOSTS = 1
+HOST_ID_DELIM = '_'
 
 def main(osm_file, gtfs_file):
     scenario = basename_without_ext(osm_file)
@@ -71,7 +72,7 @@ def main(osm_file, gtfs_file):
         # for each route, create a host group.
         # this group will contain the moving hosts along the route.
         # nodes_file is the map file this group is ok to move on
-        g = HostGroup(name)
+        g = HostGroup(name, HOST_ID_DELIM)
         g.set('movementModel', 'ScheduledMapRouteMovement')
         g.set('routeFile', stops_file.format(name))
         g.set('scheduleFile', schedule_file.format(name))
