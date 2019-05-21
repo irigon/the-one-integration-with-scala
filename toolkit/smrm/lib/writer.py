@@ -9,6 +9,7 @@ WKT_CRD_SEP = ' '
 WKT_PNT_SEP = ', '
 CSV_DELIMITER = ','
 CSV_QUOTECHAR = '"'
+FALLBACK_DURATION = 3
 
 def write_wkt_linestring(coords: List[Tuple[float, float]], file: str, append=False) -> None:
     content = ''
@@ -48,10 +49,13 @@ def write_csv_stops(coords: List[Tuple[float, float]], durations: List[int], fil
                        delimiter=CSV_DELIMITER,
                        quotechar=CSV_QUOTECHAR,
                        quoting=csv.QUOTE_MINIMAL)
-        for i, c in enumerate(coords):
+        if not durations:
+            durations = len(coords) * [FALLBACK_DURATION]
+        for i, duration in enumerate(durations):
+            c = coords[i]
             w.writerow([
                 '{} {}'.format(c[0], c[1]),
-                durations[i] if durations and len(durations) >= i-1 else 3
+                duration
             ])
 
 def write_csv_schedule(schedule: List, file: str):

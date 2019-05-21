@@ -55,7 +55,6 @@ class GTFSReader:
         the time in minutes from the previous to each stop. First value in the list is always 0.
         """
 
-        # TODO: when no ref trips set use all trips
         if self.ref_trips is None:
             return {}
         r = self.ref_trips
@@ -259,7 +258,7 @@ class GTFSReader:
         # in some cases the enumberation is 0-based, in some 1-based.
         ref_trips[STOP_SEQ] = ref_trips.groupby(ROUTE_NAME).cumcount()
 
-        # align ref_trips to given stops size of reference trips
+        # clip ref_trips to given stops size of reference trips
         # (cut off stops at the end that exceed required stops size)
         ref_trips = ref_trips[ref_trips[STOP_SEQ] < ref_trips[STOPS_SIZE_Y]]
         del ref_trips[STOPS_SIZE_Y]

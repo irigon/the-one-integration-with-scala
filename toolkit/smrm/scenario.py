@@ -13,8 +13,9 @@ NODES_FILE = '{}_nodes.wkt'
 STOPS_FILE = '{}_stops.csv'
 SCHEDULE_FILE = '{}_schedule.csv'
 STATIONS_FILE = 'stations.wkt'
+NR_OF_HOSTS = 1
 
-def main(osm_file, gtfs_file: None):
+def main(osm_file, gtfs_file):
     scenario = basename_without_ext(osm_file)
 
     # read all routes (relations with tag[k="type"][v="route"])
@@ -75,7 +76,7 @@ def main(osm_file, gtfs_file: None):
         g.set('routeFile', stops_file.format(name))
         g.set('scheduleFile', schedule_file.format(name))
         g.set('routeType', 2)
-        g.set('nrofHosts', 1)
+        g.set('nrofHosts', NR_OF_HOSTS)
         g.set_okmap(nodes_file.format(name))
         s.add_group(g)
 
@@ -119,21 +120,20 @@ def main(osm_file, gtfs_file: None):
     s.spacer()
 
     # set world size to ceiled projection pane bounds
-    # and adjust host address range to number of hosts
+    # and adjust host address range to total number of hosts
     s.set('MovementModel.worldSize', '{w}, {h}'.format(
         w=math.ceil(width),
         h=math.ceil(height)
     ))
     s.set('Events1.hosts', '{min},{max}'.format(
         min=0,
-        max=len(routes) + len(stations) - 1
+        max=len(routes) * NR_OF_HOSTS + len(stations) - 1
     ))
 
     # write settings contents to file in ONE project root
     s.write(path.join(one_dir, '{scenario}_settings.txt'.format(
         scenario=scenario
     )))
-
 
 def basename_without_ext(file: str) -> str:
     base = path.basename(file)

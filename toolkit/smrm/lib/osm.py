@@ -167,6 +167,8 @@ class OsmRouteParser:
 
     @staticmethod
     def trim_waycoords(waycoords, stopcoords, start):
+        if not waycoords:
+            return []
         while waycoords[start] != stopcoords[start]:
             if waycoords[start] in stopcoords:
                 print("Incoherent stop node order. Skiping route.")
