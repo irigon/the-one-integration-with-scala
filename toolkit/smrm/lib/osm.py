@@ -173,7 +173,7 @@ class OsmRouteParser:
             return []
         while waycoords[start] != stopcoords[start]:
             if waycoords[start] in stopcoords:
-                print("Incoherent stop node order. Skiping route.")
+                print("Inconsistent stop node order. Skiping route.")
                 return []
             waycoords.pop(start)
             if not waycoords:
