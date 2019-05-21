@@ -7,7 +7,6 @@ class OsmRoute:
                  name: str, first: str, last: str,
                  nodes: List[Tuple[float, float]],
                  stops: List[Tuple[float, float]]):
-
         self.name = name
         self.first = first
         self.last = last
@@ -72,7 +71,7 @@ class OsmRouteParser:
             )
 
             if len(stopcoords) < 2:
-                print("- ignoring route", name, ": less than 2 stops could be parsed")
+                print("-> ignoring route", name, ": less than 2 stops could be parsed")
                 continue
 
             if waycoords:
@@ -92,11 +91,12 @@ class OsmRouteParser:
         idx = stop_counts.index(max(stop_counts))
         return routes[idx]
 
-    def sort_way_nodes(self, ways: List, first_stop):
+    def sort_way_nodes(self, ways: List, first_stop, reverse_first: bool = False):
         sorted_way_nodes = []
+        ways_copy = ways.copy()
         first_way, index = self.find_first_way(ways, first_stop)
         first_way_nodes = self.way_nodes(first_way)
-        if index >= len(first_way_nodes)/2:
+        if reverse_first:
             first_way_nodes.reverse()
 
         connect = first_way_nodes[-1]
@@ -117,6 +117,8 @@ class OsmRouteParser:
             else:
                 break
 
+        if len(sorted_way_nodes) == len(first_way_nodes) and not reverse_first:
+            return self.sort_way_nodes(ways_copy, first_stop, True)
         return sorted_way_nodes
 
     def find_first_way(self, ways, first_stop):
@@ -179,7 +181,7 @@ class OsmRouteParser:
         return waycoords
 
     def rel_by_name(self, name):
-        return [r.parent for r in self.doc.select('relation tag[k="ref"][v="'+name+'"]')]
+        return [r.parent for r in self.doc.select('relation tag[k="ref"][v="' + name + '"]')]
 
     @staticmethod
     def ref(tag):
@@ -207,6 +209,3 @@ class OsmRouteParser:
     @staticmethod
     def rel_stops(r):
         return r.select('member[type="node"][role="stop"]')
-
-
-
