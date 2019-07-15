@@ -4,6 +4,7 @@ import core.Coord;
 import core.SettingsError;
 import movement.map.MapNode;
 import movement.map.SimMap;
+import movement.TransitTrip.TripDirection;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -13,13 +14,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-class ScheduledMapRouteControlSystem {
+class TransitControlSystem {
 
 	private short routeType;
-	private List<TimedPath> pathsForward;
-    private List<TimedPath> pathsBackward;
-    private List<ScheduledRouteStop> stops;
-    private volatile TreeMap<Integer, ScheduleService> schedule;
+    private List<TransitStop> stops;
+    private volatile TreeMap<Integer, TransitTrip> schedule;
     private Random r;
 
     /** Type of the route ID: circular ({@value}).
@@ -35,12 +34,10 @@ class ScheduledMapRouteControlSystem {
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
-	ScheduledMapRouteControlSystem(String stopsFile, String scheduleFile, SimMap map, int okMapType) {
-		pathsForward = new ArrayList<>();
-        pathsBackward = new ArrayList<>();
+	TransitControlSystem(String stopsFile, String scheduleFile, SimMap map, int okMapType) {
 		stops = readStops(stopsFile, map);
-		ScheduledRouteStop start = stops.get(0);
-		ScheduledRouteStop end = stops.get(stops.size() - 1);
+		TransitStop start = stops.get(0);
+		TransitStop end = stops.get(stops.size() - 1);
 
 		if (start.equals(end)) {
 		    routeType = CIRCULAR;
@@ -53,12 +50,13 @@ class ScheduledMapRouteControlSystem {
         r = new Random();
 	}
 
-	private List<ScheduledRouteStop> readStops(String fileName, SimMap map) {
+	private List<TransitStop> readStops(String fileName, SimMap map) {
 		boolean mirror = map.isMirrored();
 		double xOffset = map.getOffset().getX();
 		double yOffset = map.getOffset().getY();
+		List<TransitStop> stops = new ArrayList<>();
 
-		List<ScheduledRouteStop> stops = new ArrayList<>();
+		TransitStop previous = null;
 		FileReader fr;
 		try {
 			fr = new FileReader(fileName);
@@ -93,7 +91,14 @@ class ScheduledMapRouteControlSystem {
 				}
 
 				int timeTo = Integer.parseInt(columns[1]) * 60;
-				stops.add(new ScheduledRouteStop(node, timeTo));
+
+				TransitStop next = new TransitStop(node, timeTo);
+				next.setPrev(previous);
+				if (previous != null) {
+					previous.setNext(next);
+				}
+				previous = next;
+				stops.add(next);
 			}
 			if (stops.size() < 2) {
 				throw new SettingsError("Malformed stops file supplied: " + fileName +
@@ -110,8 +115,8 @@ class ScheduledMapRouteControlSystem {
 		return stops;
 	}
 
-	private TreeMap<Integer, ScheduleService> readSchedule(String fileName) {
-		TreeMap<Integer, ScheduleService> schedule = new TreeMap<>();
+	private TreeMap<Integer, TransitTrip> readSchedule(String fileName) {
+		TreeMap<Integer, TransitTrip> schedule = new TreeMap<>();
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		Date timeStart = null;
 		try {
@@ -136,11 +141,15 @@ class ScheduledMapRouteControlSystem {
 
 				Date time = sdf.parse(columns[0]);
 				long seconds = (time.getTime() - timeStart.getTime()) / 1000;
-
-				schedule.put((int) seconds, new ScheduleService(
-						(int) seconds,			      // start time in seconds
-						Short.parseShort(columns[1]), // first stop index
-						Short.parseShort(columns[2])  // last stop index
+				int startIndex = Integer.parseInt(columns[1]);
+				int endIndex = Integer.parseInt(columns[2]);
+				schedule.put((int) seconds, new TransitTrip(
+						(int) seconds,
+						stops.get(startIndex),
+						stops.get(endIndex),
+						startIndex < endIndex ?
+								TripDirection.FORWARD :
+								TripDirection.BACKWARD
 				));
 			}
 
@@ -150,45 +159,51 @@ class ScheduledMapRouteControlSystem {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NumberFormatException e2) {
+		} catch (NumberFormatException e) {
 			throw new SettingsError("Malformed stops file supplied, " +
 					"first column must be two double values, second column int value");
 		} catch (java.text.ParseException e) {
 			throw new SettingsError("Can not parse time");
+		} catch (IndexOutOfBoundsException e) {
+			throw new SettingsError("Stop index for trip is out of bounds");
 		}
 
 		return schedule;
 	}
 
-	private void buildPaths(List<ScheduledRouteStop> stops, int okMapType) {
-		int nextStopIdx = 0;
-		MapNode currentNode = stops.get(nextStopIdx).node;
-		nextStopIdx++;
-		MapNode nextStop = stops.get(nextStopIdx).node;
-		MapNode endStation = stops.get(stops.size() - 1).node;
+	private void buildPaths(List<TransitStop> stops, int okMapType) {
+		TransitStop currentStop = stops.get(0);
+		TransitStop nextStop = currentStop.getNext();
+		MapNode currentNode = currentStop.node;
+		MapNode nextStopNode = nextStop.node;
+
+		MapNode endNode = stops.get(stops.size() - 1).node;
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
-        TimedPath p = new TimedPath();
+        TransitWay p = new TransitWay();
 
 		nodes:
-		while (!currentNode.equals(endStation)) {
+		while (!currentNode.equals(endNode)) {
 			p.addWaypoint(currentNode.getLocation());
 
 			for (MapNode n : currentNode.getNeighbors()) {
-				if (n.equals(nextStop)) {
+				if (n.equals(nextStopNode)) {
 					p.addWaypoint(n.getLocation());
 					distance += getDistance(currentNode, n);
 
-					p.setDuration(stops.get(nextStopIdx).timeTo);
+					p.setDuration(nextStop.timeTo);
 					p.setDistance(distance);
 
-					pathsForward.add(p);
-					distance = 0;
-					p = new TimedPath();
+					currentStop.setForward(p);
+					nextStop.setBackward(p.reversed());
 
-					if (!n.equals(endStation)) {
-						nextStopIdx++;
-						nextStop = stops.get(nextStopIdx).node;
+					distance = 0;
+					p = new TransitWay();
+
+					if (!n.equals(endNode)) {
+						currentStop = nextStop;
+						nextStop = nextStop.getNext();
+						nextStopNode = nextStop.node;
 					}
 					lastWayPoint = currentNode;
 					currentNode = n;
@@ -202,60 +217,32 @@ class ScheduledMapRouteControlSystem {
 				}
 			}
 		}
-		buildBackwardsPaths(pathsForward);
 	}
-
-	private void buildBackwardsPaths(List<TimedPath> pathsForward) {
-	    for (TimedPath p : pathsForward) {
-	        List<Coord> coords = new ArrayList<>(p.getCoords());
-            Collections.reverse(coords);
-            TimedPath p2 = new TimedPath();
-            for (Coord c : coords) {
-                p2.addWaypoint(c);
-            }
-            p2.setDuration(p.getDuration());
-            p2.setDistance(p.getDistance());
-            pathsBackward.add(p2);
-        }
-    }
 
 	private double getDistance(MapNode n1, MapNode n2) {
 		return n1.getLocation().distance(n2.getLocation());
 	}
 
-	public TimedPath nextPath(ScheduleService service) {
-        if (service.isDirectionBackward())
-            return new TimedPath(pathsBackward.get(service.nextStop() - 1));
-
-        return new TimedPath(pathsForward.get(service.nextStop()));
-    }
 
     public short getRouteType() {
         return routeType;
     }
 
-    public short getNrOfStops() {
-	    return (short) stops.size();
-    }
 
-    public Coord getInitialLocation(int stopId) {
-	    return stops.get(stopId).node.getLocation().clone();
-    }
-
-    public synchronized ScheduleService getInitialService(int time) {
+    public synchronized TransitTrip getInitialTrip(int time) {
 		if (schedule == null) {
-			return defaultService(time);
+			return defaultTrip(time);
 		}
 		int key = schedule.ceilingKey(time);
 		return schedule.remove(key);
 	}
 
-	public synchronized ScheduleService getServiceForStop(int time, int currentStop) {
+	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop) {
 		if (schedule == null) {
-			return defaultServiceForStop(time, currentStop);
+			return defaultTripForStop(time, currentStop);
 		}
 		Integer key = schedule.ceilingKey(time);
-		while (schedule.get(key).getFirstStop() != currentStop) {
+		while (!schedule.get(key).getFirstStop().equals(currentStop)) {
 			key = schedule.higherKey(key);
 			if (key == null)
 				return null;
@@ -263,28 +250,31 @@ class ScheduledMapRouteControlSystem {
 		return schedule.remove(key);
 	}
 
-	private ScheduleService defaultService(int time) {
+	private TransitTrip defaultTrip(int time) {
 		if (r.nextBoolean()) {
-			return new ScheduleService(
+			return new TransitTrip(
 					time,
-					(short) 0,
-					(short) (stops.size()-1)
+					stops.get(0),
+					stops.get(stops.size()-1),
+					TripDirection.FORWARD
 			);
 		}
-		return new ScheduleService(
+		return new TransitTrip(
 				time,
-				(short) (stops.size()-1),
-				(short) 0
+				stops.get(stops.size()-1),
+				stops.get(0),
+				TripDirection.BACKWARD
 		);
 
 	}
 
-	private ScheduleService defaultServiceForStop(int time, int currentStop) {
-		int lastStop = currentStop == 0 ? stops.size() -1 : 0;
-		return new ScheduleService(
+	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
+		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
+		return new TransitTrip(
 				time,
-				(short) currentStop,
-				(short) lastStop
+				currentStop,
+				lastStop,
+				TripDirection.BACKWARD //FIXME!
 		);
 	}
 }

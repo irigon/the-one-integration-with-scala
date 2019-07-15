@@ -1,14 +1,16 @@
 package movement;
 
-public class TimedPath extends Path {
+import java.util.Collections;
+
+public class TransitWay extends Path {
 
     private double duration;
     private double distance;
 
-    public TimedPath() {
+    public TransitWay() {
     }
 
-    public TimedPath(TimedPath path) {
+    public TransitWay(TransitWay path) {
         super(path);
         this.duration = path.duration;
         this.distance = path.distance;
@@ -32,6 +34,12 @@ public class TimedPath extends Path {
 
     public void adjustSpeed(double waitingTime) {
         setSpeed(distance/(duration - waitingTime));
+    }
+
+    public TransitWay reversed() {
+        TransitWay reversed = new TransitWay(this);
+        Collections.reverse(reversed.getCoords());
+        return reversed;
     }
 
 }

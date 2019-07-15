@@ -16,7 +16,7 @@ import java.util.List;
  * (no pathfinder). Additionally, a schedule for when each node should arrive at which route stop is respected.
  * See toolkit/smrm/README.md for details and instructions on how to generate needed files.
  */
-public class ScheduledMapRouteMovement extends MapBasedMovement implements
+public class TransitMapMovement extends MapBasedMovement implements
 	SwitchableMovement {
 
 	/** Per node group setting used for selecting a route file ({@value}) */
@@ -25,22 +25,22 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	/** Per node group schedule containing route time information */
 	public static final String SCHEDULE_FILE_S = "scheduleFile";
 
-	private ScheduledMapRouteControlSystem system;
+	private TransitControlSystem system;
 	private short currentStopIndex;
 	private short routeType;
 	private double waitTime = 0;
-	private ScheduleService currentService;
+	private TransitTrip currentTrip;
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 * @param settings The Settings object where the settings are read from
 	 */
-	public ScheduledMapRouteMovement(Settings settings) {
+	public TransitMapMovement(Settings settings) {
 		super(settings);
 		String stopsFile = settings.getSetting(ROUTE_FILE_S);
 		String scheduleFile = settings.getSetting(SCHEDULE_FILE_S);
 
-		system = new ScheduledMapRouteControlSystem(
+		system = new TransitControlSystem(
 				stopsFile,
 				scheduleFile,
                 getMap(),
@@ -53,9 +53,9 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	/**
 	 * Copyconstructor. Gives a route to the new movement model from the
 	 * list of routes and randomizes the starting position.
-	 * @param proto The ScheduledMapRouteMovement prototype
+	 * @param proto The TransitMapMovement prototype
 	 */
-	protected ScheduledMapRouteMovement(ScheduledMapRouteMovement proto) {
+	protected TransitMapMovement(TransitMapMovement proto) {
 		super(proto);
 		this.currentStopIndex = proto.currentStopIndex;
 		this.system = proto.system;
@@ -64,27 +64,27 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 
     @Override
     public Path getPath() {
-        TimedPath tp = system.nextPath(currentService);
-	    tp.adjustSpeed(waitTime);
-	    return tp;
+        TransitWay tw = currentTrip.nextWay();
+	    tw.adjustSpeed(waitTime);
+	    return tw;
     }
 
     @Override
 	public double nextPathAvailable() {
-		if (currentService.atFirstStop()) {
+		if (currentTrip.atFirstStop()) {
 			waitTime = 0;
-			return currentService.getStartTime();
+			return currentTrip.getStartTime();
 		}
-		if (currentService.atLastStop()) {
-			currentService = system.getServiceForStop(
+		if (currentTrip.atLastStop()) {
+			currentTrip = system.getTripForStop(
 					(int) SimClock.getTime(),
-					currentService.getCurrentStop()
+					currentTrip.getCurrentStop()
 			);
 			waitTime = 0;
-			// When no more services from this stop exist, halt here.
-			if (currentService == null)
+			// When no more trips from this stop exist, halt here.
+			if (currentTrip == null)
 				return Double.MAX_VALUE;
-			return currentService.getStartTime();
+			return currentTrip.getStartTime();
 		}
 		waitTime = generateWaitTime();
 		return SimClock.getTime() + waitTime;
@@ -95,13 +95,13 @@ public class ScheduledMapRouteMovement extends MapBasedMovement implements
 	 */
 	@Override
 	public Coord getInitialLocation() {
-		currentService = system.getInitialService((int) SimClock.getTime());
-		return system.getInitialLocation(currentService.getFirstStop());
+		currentTrip = system.getInitialTrip((int) SimClock.getTime());
+		return currentTrip.startLocation().clone();
 	}
 
 	@Override
-	public ScheduledMapRouteMovement replicate() {
-		return new ScheduledMapRouteMovement(this);
+	public TransitMapMovement replicate() {
+		return new TransitMapMovement(this);
 	}
 
 	@Override
