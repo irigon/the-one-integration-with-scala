@@ -73,7 +73,7 @@ def main(osm_file, gtfs_file):
         # this group will contain the moving hosts along the route.
         # nodes_file is the map file this group is ok to move on
         g = HostGroup(name, HOST_ID_DELIM)
-        g.set('movementModel', 'ScheduledMapRouteMovement')
+        g.set('movementModel', 'TransitMapMovement')
         g.set('routeFile', stops_file.format(name))
         g.set('scheduleFile', schedule_file.format(name))
         g.set('routeType', 2)
