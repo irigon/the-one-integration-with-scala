@@ -7,6 +7,7 @@ from lib.project import Projector
 from lib.one import HostGroup, ScenarioSettings
 from lib.gtfs import GTFSReader
 from lib import writer
+from lib.commons import TransitRoute
 
 DATA_DIR = 'data'
 NODES_FILE = '{}_nodes.wkt'
@@ -16,33 +17,33 @@ STATIONS_FILE = 'stations.wkt'
 NR_OF_HOSTS = 1
 HOST_ID_DELIM = '_'
 
-def main(osm_file, gtfs_file):
-    scenario = basename_without_ext(osm_file)
-
+def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
     # read all routes (relations with tag[k="type"][v="route"])
     # from osm file
     with open(osm_file) as fp:
         orp = OsmRouteParser(fp)
     routes = orp.parse_routes()
-    points = []
+    ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
+
+    gtfs.set_ref_trips(ref_routes)
+    return routes
+
+def main(gtfs_file, osm_file):
+    scenario = basename_without_ext(osm_file)
+
+    gtfs = GTFSReader(gtfs_file)
+    routes = osm_routes(gtfs, osm_file)
+    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
+    durations = gtfs.trip_durations()
+
+    points = set()
     for r in routes:
-        points.extend(r.nodes)
+        points.update(r.nodes)
 
     # initialize projection pane (width, height in m)
     # from coordinate bounds of all nodes
     proj = Projector(precision=2)
     width, height = proj.init_dimensions(points)
-
-    # open GTFS zip, pass the osm routes as reference trips
-    # and query the schedules and durations of all routes
-    schedule = {}
-    durations = {}
-    if gtfs_file:
-        gtfs = GTFSReader(gtfs_file)
-        ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
-        gtfs.set_ref_trips(ref_routes)
-        schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
-        durations = gtfs.trip_durations()
 
     # switch to ONE project root and make dir
     # for the new scenario in /data
