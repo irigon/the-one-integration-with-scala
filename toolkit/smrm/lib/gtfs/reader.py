@@ -19,11 +19,14 @@ class GTFSReader:
     trips: DataFrame
     stops: DataFrame
     routes: DataFrame
+    shapes: DataFrame
 
     ref_trips: DataFrame
+    route_types: List[int]
 
-    def __init__(self, gtfs_file: str):
+    def __init__(self, gtfs_file: str, route_types: List[int]):
         self.load_gtfs(gtfs_file)
+        self.route_types = route_types
         self.__merge_data()
 
     def load_gtfs(self, gtfs_file: str):
@@ -44,6 +47,9 @@ class GTFSReader:
         except KeyError:
             print(file, 'is missing in', gtfs_file)
             sys.exit(1)
+
+    def set_route_types(self, types: List[int]):
+        self.route_types = types
 
     def trip_durations(self) -> Dict[str, List[int]]:
         """
@@ -101,12 +107,12 @@ class GTFSReader:
 
         trips = pd.merge(
             self.trips,
-            services[[SERVICE_ID, DATE]],
+            services[[SERVICE_ID]],
             on=SERVICE_ID,
         )
         stop_times = pd.merge(
             self.stop_times,
-            trips[[TRIP_ID, SERVICE_ID, DATE]],
+            trips[[TRIP_ID, SERVICE_ID]],
             on=TRIP_ID,
         )
         stop_times = pd.merge(
@@ -118,7 +124,7 @@ class GTFSReader:
         )
 
         # for each trip, keep only the first arrival_time and first and last stop name
-        start_times = stop_times.groupby([TRIP_ID, ROUTE_NAME, DIRECTION_ID, SERVICE_ID, DATE]).agg({
+        start_times = stop_times.groupby([TRIP_ID, ROUTE_NAME, DIRECTION_ID, SERVICE_ID]).agg({
             ARR_TIME: 'first',
             STOP_NAME: ['first', 'last']
         })
@@ -166,7 +172,7 @@ class GTFSReader:
             out[r[1]].append(tuple(r[2:]))
         return out
 
-    def set_ref_trips(self, ref_routes: List[Tuple[str, str, str, int]]):
+    def __set_ref_trips(self):
         """
         To align gtfs data with external route information, a list of
         reference routes is given, containing the route name, stops on this route
@@ -186,11 +192,6 @@ class GTFSReader:
         if ROUTE_NAME not in self.stop_times:
             self.__merge_data()
 
-        # create dataframe from given routes
-        ref_routes = pd.DataFrame(
-            ref_routes,
-            columns=[ROUTE_NAME, REF_NAME_FIRST, REF_NAME_LAST, STOPS_SIZE]
-        )
         # group stop times by trips, counting stops of each
         # trip and keeping the first and last stop name
         trip_stop_counts = self.stop_times.groupby(
@@ -213,55 +214,25 @@ class GTFSReader:
         ]
         trip_stop_counts.reset_index(inplace=True)
 
-        # keep only one trip per route with the same stop size
-        # and first/last stop name (these trips are considered to be equal)
-        trip_stop_counts.drop_duplicates(
-            [STOPS_SIZE, STOP_NAME_FIRST, STOP_NAME_LAST],
-            keep='first',
-            inplace=True
+        max_trips = trip_stop_counts.sort_values(
+            [ROUTE_NAME, STOPS_SIZE],
         )
-
-        # eventually, merge the single trips (containing stop counts and
-        # first/last names) with the reference routes and their respective first/last names
-        # ROUTE_NAME and STOPS_SIZE is expected to be equal, otherwise no ref_trips item
-        # for this route will be created
-        ref_trips = pd.merge(
-            trip_stop_counts,
-            ref_routes,
-            on=[ROUTE_NAME]
+        max_trips.drop_duplicates(
+            ROUTE_NAME,
+            keep='last',
+            inplace=True,
         )
-
-        # filter trips on those either matching the stop count of the respective reference route
-        # or by the maximum stop count if no match was found. This way the trip can still be
-        # used, but has to be cropped to the respective reference route stop count
-        ref_trips = ref_trips[
-            (ref_trips[STOPS_SIZE_X] == ref_trips[STOPS_SIZE_Y]) |
-            (ref_trips[STOPS_SIZE_X] == ref_trips.groupby([ROUTE_NAME])[STOPS_SIZE_X].transform(max))
-        ]
-
-        # to match the reference route to one trip, first/last stop names
-        # have to be compared. These are not neccesarily expected to be equal, but similar.
-        # for similarity measurement, the levenshtein editdistance between stop name and
-        # ref stop name strings is evaluated and averaged between stops (SCORE column)
-        # finally, the trip with the best score for each route is kept as reference trip
-        ref_trips[SCORE] = ref_trips.apply(score, axis=1)
-        ref_trips.sort_values([ROUTE_NAME, SCORE], inplace=True)
-        ref_trips.drop_duplicates(ROUTE_NAME, keep='last', inplace=True)
         ref_trips = pd.merge(
-            ref_trips[[TRIP_ID, STOPS_SIZE_Y]],
+            max_trips[TRIP_ID],
             self.stop_times,
             on=TRIP_ID
         )
+        ref_trips = pd.merge(
+            ref_trips,
+            self.trips[[TRIP_ID, SHAPE_ID]],
+            on=TRIP_ID
+        )
 
-        # rebuild stop sequence column to have a consistent enumeration.
-        # (we don't want to rely on the given stop_sequence here,
-        # in some cases the enumberation is 0-based, in some 1-based.
-        ref_trips[STOP_SEQ] = ref_trips.groupby(ROUTE_NAME).cumcount()
-
-        # clip ref_trips to given stops size of reference trips
-        # (cut off stops at the end that exceed required stops size)
-        ref_trips = ref_trips[ref_trips[STOP_SEQ] < ref_trips[STOPS_SIZE_Y]]
-        del ref_trips[STOPS_SIZE_Y]
         self.ref_trips = ref_trips
 
     # filter by days, 0: weekdays, 1: saturdays, 2: sundays
@@ -277,6 +248,11 @@ class GTFSReader:
                     (s[THU] == 1) &
                     (s[FRI] == 1)
             ) |
+            (       # When there's not a service date that covers all work days
+                    # fall back to just using monday
+                    (weekday_type == 0) &
+                    (s[MON] == 1)
+            ) |
             (
                     (weekday_type == 1) &
                     (s[SAT] == 1)
@@ -290,6 +266,8 @@ class GTFSReader:
     # filter by exeption count
     def __filter_exceptions(self, services: DataFrame, days_treshold: int) -> DataFrame:
         s = services
+        if self.exceptions.empty:
+            return s
         counts = self.exceptions.groupby(SERVICE_ID) \
             .count() \
             .reset_index()
@@ -300,21 +278,34 @@ class GTFSReader:
 
     # merge all needed columns into the stop_times dataframe
     def __merge_data(self):
+        self.routes = self.routes[self.routes[ROUTE_TYPE].isin(self.route_types)]
+        # define needed trip fields, add shape_id if shapes are present
+        trip_fields = [ROUTE_ID, SERVICE_ID, TRIP_ID, DIRECTION_ID]
+        if not self.shapes.empty:
+            trip_fields += SHAPE_ID
+        # merge trips on routes
         self.trips = pd.merge(
-            self.trips[[ROUTE_ID, SERVICE_ID, TRIP_ID, DIRECTION_ID]],
+            self.trips[trip_fields],
             self.routes[[ROUTE_ID, ROUTE_NAME]],
             on=ROUTE_ID
         )
+        # merge trips on services
         self.trips = pd.merge(
             self.trips,
             self.services[SERVICE_ID],
             on=SERVICE_ID
         )
+        # define needed stop_times fields, add shape_id if shapes are present
+        stop_times_fields = [TRIP_ID, ARR_TIME, STOP_ID, STOP_SEQ]
+        if not self.shapes.empty:
+            stop_times_fields += SHAPE_DIST
+        # merge trips on stop_times
         self.stop_times = pd.merge(
             self.trips[[TRIP_ID, ROUTE_NAME, DIRECTION_ID]],
-            self.stop_times[[TRIP_ID, ARR_TIME, STOP_ID, STOP_SEQ]],
+            self.stop_times[stop_times_fields],
             on=TRIP_ID
         )
+        # merge stop_times on stops and sort by trips and stop sequence
         self.stop_times = pd.merge(
             self.stop_times,
             self.stops[[STOP_ID, STOP_NAME]],
@@ -325,6 +316,44 @@ class GTFSReader:
             inplace=True
         )
 
+    def route_names(self):
+        routes = self.ref_trips.drop_duplicates(ROUTE_NAME, keep='first')
+        routes = routes[ROUTE_NAME]
+        return list(routes)
+
+    def shape_paths(self):
+        ref_trips = self.ref_trips.drop_duplicates(TRIP_ID, keep='first')
+        ref_shapes = pd.merge(
+            self.shapes,
+            ref_trips[[ROUTE_NAME, SHAPE_ID]],
+            on=SHAPE_ID
+        )
+        ref_shapes.sort_values(
+            [ROUTE_NAME, SHAPE_SEQ],
+            inplace=True
+        )
+        ref_shapes = ref_shapes[[ROUTE_NAME, SHAPE_LAT, SHAPE_LON]]
+        out = {r: [] for r in ref_shapes[ROUTE_NAME].unique()}
+        for r in ref_shapes.itertuples():
+            out[r[1]].append((r[2], r[3]))
+        return out
+
+    def shape_stops(self):
+        stop_shapes = pd.merge(
+            self.ref_trips[[ROUTE_NAME, STOP_SEQ, SHAPE_ID, SHAPE_DIST]],
+            self.shapes,
+            on=[SHAPE_ID, SHAPE_DIST]
+        )
+        stop_shapes.sort_values([
+            ROUTE_NAME, STOP_SEQ],
+            inplace=True
+        )
+
+        stop_shapes = stop_shapes[[ROUTE_NAME, SHAPE_LAT, SHAPE_LON]]
+        out = {r: [] for r in stop_shapes[ROUTE_NAME].unique()}
+        for r in stop_shapes.itertuples():
+            out[r[1]].append((r[2], r[3]))
+        return out
 
 def index_stops(row, col):
     i = row[STOP_NAME].index(row[col])

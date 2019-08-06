@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from geopy import distance
-from typing import List, Tuple
+from typing import List, Tuple, Set
 class Projector:
 
     lat_min = 90
@@ -11,7 +11,7 @@ class Projector:
     def __init__(self, precision: int):
         self.precision = precision
 
-    def init_dimensions(self, coords: List[Tuple[float, float]]) -> (float, float):
+    def init_dimensions(self, coords: Set[Tuple[float, float]]) -> (float, float):
         for c in coords:
             if c[0] < self.lat_min:  self.lat_min = c[0]
             if c[0] > self.lat_max:  self.lat_max = c[0]

@@ -16,33 +16,34 @@ STATIONS_FILE = 'stations.wkt'
 NR_OF_HOSTS = 1
 HOST_ID_DELIM = '_'
 
-def main(osm_file, gtfs_file):
-    scenario = basename_without_ext(osm_file)
+def main(gtfs_file, osm_file):
+    scenario = basename_without_ext(gtfs_file)
 
     # read all routes (relations with tag[k="type"][v="route"])
     # from osm file
-    with open(osm_file) as fp:
-        orp = OsmRouteParser(fp)
-    routes = orp.parse_routes()
-    points = []
+    # with open(osm_file) as fp:
+    #     orp = OsmRouteParser(fp)
+    # routes = orp.parse_routes()
+    # points = []
+    # for r in routes:
+    #     points.extend(r.nodes)
+
+    gtfs = GTFSReader(gtfs_file, [0])
+    routes = gtfs.route_names()
+    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
+    durations = gtfs.trip_durations()
+    paths = gtfs.shape_paths()
+    stops = gtfs.shape_stops()
+
+    points = set()
     for r in routes:
-        points.extend(r.nodes)
+        points.update(paths[r])
 
     # initialize projection pane (width, height in m)
     # from coordinate bounds of all nodes
     proj = Projector(precision=2)
     width, height = proj.init_dimensions(points)
 
-    # open GTFS zip, pass the osm routes as reference trips
-    # and query the schedules and durations of all routes
-    schedule = {}
-    durations = {}
-    if gtfs_file:
-        gtfs = GTFSReader(gtfs_file)
-        ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
-        gtfs.set_ref_trips(ref_routes)
-        schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
-        durations = gtfs.trip_durations()
 
     # switch to ONE project root and make dir
     # for the new scenario in /data
@@ -63,29 +64,28 @@ def main(osm_file, gtfs_file):
     for r in routes:
         # transform the coordinates from lat,long
         # to x,y tuples on projection pane
-        nodes = proj.transform_coords(r.nodes)
-        stops = proj.transform_coords(r.stops)
+        route_nodes = proj.transform_coords(paths[r])
+        route_stops = proj.transform_coords(stops[r])
 
-        name = r.name
-        stations.update(stops)
+        stations.update(route_stops)
 
         # for each route, create a host group.
         # this group will contain the moving hosts along the route.
         # nodes_file is the map file this group is ok to move on
-        g = HostGroup(name, HOST_ID_DELIM)
+        g = HostGroup(r, HOST_ID_DELIM)
         g.set('movementModel', 'TransitMapMovement')
-        g.set('routeFile', stops_file.format(name))
-        g.set('scheduleFile', schedule_file.format(name))
+        g.set('routeFile', stops_file.format(r))
+        g.set('scheduleFile', schedule_file.format(r))
         g.set('routeType', 2)
         g.set('nrofHosts', NR_OF_HOSTS)
-        g.set_okmap(nodes_file.format(name))
+        g.set_okmap(nodes_file.format(r))
         s.add_group(g)
 
         # write a wkt LINESTRING with all nodes in this route
         # (includes stops and way nodes)
         writer.write_wkt_linestring(
-            coords=nodes,
-            file=nodes_file.format(name)
+            coords=route_nodes,
+            file=nodes_file.format(r)
         )
 
         # write only stop nodes in csv with
@@ -93,16 +93,16 @@ def main(osm_file, gtfs_file):
         # 2nd col: durations between each stop to the next one
         # (will be used to generate path speeds)
         writer.write_csv_stops(
-            coords=stops,
-            durations=durations.get(r.name),
-            file=stops_file.format(name)
+            coords=route_stops,
+            durations=durations.get(r),
+            file=stops_file.format(r)
         )
 
         # write the schedule of this line
         # (start times, start and stop ids and direction)
         writer.write_csv_schedule(
-            schedule=schedule.get(r.name),
-            file=schedule_file.format(name)
+            schedule=schedule.get(r),
+            file=schedule_file.format(r)
         )
 
     # add another group for all stations.
@@ -144,7 +144,7 @@ def basename_without_ext(file: str) -> str:
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Please give .osm (and .zip input files as arguments)")
+        print("Please give .zip gtfs file")
         sys.exit(1)
 
     main(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
