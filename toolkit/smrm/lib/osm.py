@@ -65,7 +65,7 @@ class OsmRouteParser:
                 continue
 
             if waycoords:
-                routes.append(OsmRoute(
+                routes.append(TransitRoute(
                     name=name,
                     first=self.stop_name(first_stop),
                     last=self.stop_name(last_stop),

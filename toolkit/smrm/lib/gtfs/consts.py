@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # map gtfs files to dataframes
-GTFS_FILES = [
-    ('services', 'calendar.txt'),  # service days by service id
-    ('exceptions', 'calendar_dates.txt'),  # exceptions from regular service days
-    ('stop_times', 'stop_times.txt'),  # stop times at each stop for each trip
-    ('trips', 'trips.txt'),  # trips by route id
-    ('stops', 'stops.txt'),  # stop names and ids
-    ('routes', 'routes.txt'),  # routes for each service id
-    ('shapes', 'shapes.txt')  # shape-paths for each trip
-]
+GTFS_FILES = {
+    'services': 'calendar.txt',  # service days by service id
+    'exceptions': 'calendar_dates.txt',  # exceptions from regular service days
+    'stop_times': 'stop_times.txt',  # stop times at each stop for each trip
+    'trips': 'trips.txt',  # trips by route id
+    'stops': 'stops.txt',  # stop names and ids
+    'routes': 'routes.txt',  # routes for each service id
+    'shapes': 'shapes.txt'  # shape-paths for each trip
+}
 
 # services headers
 SERVICE_ID = 'service_id'

@@ -46,13 +46,16 @@ def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
         )
     return routes
 
-def main(osm_file, gtfs_file):
-    scenario = basename_without_ext(osm_file)
+def main(gtfs_file, osm_file):
+    scenario = basename_without_ext(gtfs_file)
 
-    gtfs = GTFSReader(gtfs_file)
+    gtfs = GTFSReader()
+    gtfs.load_feed(gtfs_file, route_types=[0], with_shapes=True)
 
-    routes = osm_routes(gtfs, osm_file)
-    routes = shape_routes(gtfs)
+    if osm_file:
+        routes = osm_routes(gtfs, osm_file)
+    else:
+        routes = shape_routes(gtfs)
 
     schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
     durations = gtfs.trip_durations()
