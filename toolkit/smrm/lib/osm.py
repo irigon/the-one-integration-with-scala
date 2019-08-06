@@ -1,17 +1,7 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 from typing import List, Tuple, Union, TextIO
-
-class OsmRoute:
-    def __init__(self,
-                 name: str, first: str, last: str,
-                 nodes: List[Tuple[float, float]],
-                 stops: List[Tuple[float, float]]):
-        self.name = name
-        self.first = first
-        self.last = last
-        self.nodes = nodes
-        self.stops = stops
+from lib.commons import TransitRoute
 
 class OsmRouteParser:
     doc = []
@@ -40,7 +30,7 @@ class OsmRouteParser:
             rel_index[n] = rel_index.get(n, []) + [r]
         return rel_index
 
-    def parse_routes(self) -> List[OsmRoute]:
+    def parse_routes(self) -> List[TransitRoute]:
         route_names = self.rel_index.keys()
         routes = []
         routes_processed = []

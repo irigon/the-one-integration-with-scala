@@ -8,6 +8,7 @@ from lib.one import HostGroup, ScenarioSettings
 from lib.gtfs import GTFSReader
 from lib import writer
 from lib.commons import TransitRoute
+from typing import List
 
 DATA_DIR = 'data'
 NODES_FILE = '{}_nodes.wkt'
@@ -28,11 +29,31 @@ def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
     gtfs.set_ref_trips(ref_routes)
     return routes
 
-def main(gtfs_file, osm_file):
+def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
+    gtfs.build_ref_trips()
+    route_names = gtfs.route_names()
+    paths = gtfs.shape_paths()
+    stops = gtfs.shape_stops()
+
+    routes = []
+    for r in route_names:
+        routes.append(
+            TransitRoute(
+                name=r,
+                nodes=paths[r],
+                stops=stops[r]
+            )
+        )
+    return routes
+
+def main(osm_file, gtfs_file):
     scenario = basename_without_ext(osm_file)
 
     gtfs = GTFSReader(gtfs_file)
+
     routes = osm_routes(gtfs, osm_file)
+    routes = shape_routes(gtfs)
+
     schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
     durations = gtfs.trip_durations()
 
