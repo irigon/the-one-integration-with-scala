@@ -7,6 +7,8 @@ from lib.project import Projector
 from lib.one import HostGroup, ScenarioSettings
 from lib.gtfs import GTFSReader
 from lib import writer
+from lib.commons import TransitRoute
+from typing import List
 
 DATA_DIR = 'data'
 NODES_FILE = '{}_nodes.wkt'
@@ -16,28 +18,35 @@ STATIONS_FILE = 'stations.wkt'
 NR_OF_HOSTS = 1
 HOST_ID_DELIM = '_'
 
-def main(gtfs_file, osm_file):
-    scenario = basename_without_ext(gtfs_file)
 
-    # read all routes (relations with tag[k="type"][v="route"])
-    # from osm file
-    # with open(osm_file) as fp:
-    #     orp = OsmRouteParser(fp)
-    # routes = orp.parse_routes()
-    # points = []
-    # for r in routes:
-    #     points.extend(r.nodes)
-
-    gtfs = GTFSReader(gtfs_file, [0])
-    routes = gtfs.route_names()
-    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
-    durations = gtfs.trip_durations()
+def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
+    gtfs.build_ref_trips()
+    route_names = gtfs.route_names()
     paths = gtfs.shape_paths()
     stops = gtfs.shape_stops()
 
+    routes = []
+    for r in route_names:
+        routes.append(
+            TransitRoute(
+                name=r,
+                nodes=paths[r],
+                stops=stops[r]
+            )
+        )
+    return routes
+
+def main(gtfs_file, osm_file):
+    scenario = basename_without_ext(gtfs_file)
+
+    gtfs = GTFSReader(gtfs_file, [0])
+    routes = shape_routes(gtfs)
+    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
+    durations = gtfs.trip_durations()
+
     points = set()
     for r in routes:
-        points.update(paths[r])
+        points.update(r.nodes)
 
     # initialize projection pane (width, height in m)
     # from coordinate bounds of all nodes
@@ -64,28 +73,28 @@ def main(gtfs_file, osm_file):
     for r in routes:
         # transform the coordinates from lat,long
         # to x,y tuples on projection pane
-        route_nodes = proj.transform_coords(paths[r])
-        route_stops = proj.transform_coords(stops[r])
+        route_nodes = proj.transform_coords(r.nodes)
+        route_stops = proj.transform_coords(r.stops)
 
         stations.update(route_stops)
 
         # for each route, create a host group.
         # this group will contain the moving hosts along the route.
         # nodes_file is the map file this group is ok to move on
-        g = HostGroup(r, HOST_ID_DELIM)
+        g = HostGroup(r.name, HOST_ID_DELIM)
         g.set('movementModel', 'TransitMapMovement')
-        g.set('routeFile', stops_file.format(r))
-        g.set('scheduleFile', schedule_file.format(r))
+        g.set('routeFile', stops_file.format(r.name))
+        g.set('scheduleFile', schedule_file.format(r.name))
         g.set('routeType', 2)
         g.set('nrofHosts', NR_OF_HOSTS)
-        g.set_okmap(nodes_file.format(r))
+        g.set_okmap(nodes_file.format(r.name))
         s.add_group(g)
 
         # write a wkt LINESTRING with all nodes in this route
         # (includes stops and way nodes)
         writer.write_wkt_linestring(
             coords=route_nodes,
-            file=nodes_file.format(r)
+            file=nodes_file.format(r.name)
         )
 
         # write only stop nodes in csv with
@@ -94,15 +103,15 @@ def main(gtfs_file, osm_file):
         # (will be used to generate path speeds)
         writer.write_csv_stops(
             coords=route_stops,
-            durations=durations.get(r),
-            file=stops_file.format(r)
+            durations=durations.get(r.name),
+            file=stops_file.format(r.name)
         )
 
         # write the schedule of this line
         # (start times, start and stop ids and direction)
         writer.write_csv_schedule(
-            schedule=schedule.get(r),
-            file=schedule_file.format(r)
+            schedule=schedule.get(r.name),
+            file=schedule_file.format(r.name)
         )
 
     # add another group for all stations.

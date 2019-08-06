@@ -172,7 +172,7 @@ class GTFSReader:
             out[r[1]].append(tuple(r[2:]))
         return out
 
-    def __set_ref_trips(self):
+    def build_ref_trips(self):
         """
         To align gtfs data with external route information, a list of
         reference routes is given, containing the route name, stops on this route
