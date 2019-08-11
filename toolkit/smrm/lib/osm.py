@@ -2,6 +2,7 @@
 from bs4 import BeautifulSoup
 from typing import List, Tuple, Union, TextIO
 from lib.commons import TransitRoute
+import logging
 
 class OsmRouteParser:
     doc = []
@@ -14,6 +15,7 @@ class OsmRouteParser:
         self.build_indices()
 
     def build_indices(self):
+        logging.info('building element indices')
         self.node_index = {
             node.attrs['id']: node for node in self.doc.find_all('node')
         }
@@ -47,7 +49,7 @@ class OsmRouteParser:
             if not ways or not stops:
                 continue
 
-            print('processing route', name)
+            logging.info('processing osm route ' + name)
 
             first_stop = self.ref(stops[0])
             last_stop = self.ref(stops[-1])
@@ -61,7 +63,7 @@ class OsmRouteParser:
             )
 
             if len(stopcoords) < 2:
-                print("-> ignoring route", name, ": less than 2 stops could be parsed")
+                logging.info(" ignoring route" + name + ": less than 2 stops could be parsed")
                 continue
 
             if waycoords:
@@ -163,7 +165,7 @@ class OsmRouteParser:
             return []
         while waycoords[start] != stopcoords[start]:
             if waycoords[start] in stopcoords:
-                print("Inconsistent stop node order. Skiping route.")
+                logging.info("Inconsistent stop node order. Skiping route.")
                 return []
             waycoords.pop(start)
             if not waycoords:
