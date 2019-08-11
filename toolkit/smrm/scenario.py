@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys, os, math
+import argparse
+import logging
 from os import path
 from pathlib import Path
 from lib.osm import OsmRouteParser
@@ -19,8 +21,10 @@ NR_OF_HOSTS = 1
 HOST_ID_DELIM = '_'
 
 def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
-    # read all routes (relations with tag[k="type"][v="route"])
+    # reads all routes (relations with tag[k="type"][v="route"])
     # from osm file
+
+    logging.info("reading route paths from osm file")
     with open(osm_file) as fp:
         orp = OsmRouteParser(fp)
     routes = orp.parse_routes()
@@ -30,6 +34,9 @@ def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
     return routes
 
 def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
+    # reads route paths from gtfs shapes
+
+    logging.info("reading route paths from gtfs shapes")
     gtfs.build_ref_trips()
     route_names = gtfs.route_names()
     paths = gtfs.shape_paths()
@@ -46,18 +53,22 @@ def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
         )
     return routes
 
-def main(gtfs_file, osm_file):
-    scenario = basename_without_ext(gtfs_file)
+def main(args):
+    scenario = basename_without_ext(args.gtfs_file)
+    route_types = args.types.split(',')
+    with_shapes = not args.osm
 
+    logging.info('reading gtfs feed in '+args.gtfs_file)
     gtfs = GTFSReader()
-    gtfs.load_feed(gtfs_file, route_types=[0], with_shapes=True)
+    gtfs.load_feed(args.gtfs_file, route_types=route_types, with_shapes=with_shapes)
 
-    if osm_file:
-        routes = osm_routes(gtfs, osm_file)
+    if args.osm:
+        routes = osm_routes(gtfs, args.osm)
     else:
         routes = shape_routes(gtfs)
 
-    schedule = gtfs.schedule(weekday_type=0, max_exceptions=180)
+    logging.info("building schedule and trip durations")
+    schedule = gtfs.schedule(weekday_type=args.weekday, max_exceptions=args.max_exceptions)
     durations = gtfs.trip_durations()
 
     points = set()
@@ -75,6 +86,8 @@ def main(gtfs_file, osm_file):
     out_dir = path.join(one_dir, DATA_DIR, scenario)
     if not path.isdir(out_dir):
         os.mkdir(out_dir)
+
+    logging.info("creating ONE scenario and writing files")
 
     nodes_file = path.join(out_dir, NODES_FILE)
     stops_file = path.join(out_dir, STOPS_FILE)
@@ -168,8 +181,30 @@ def basename_without_ext(file: str) -> str:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Please give .osm (and .zip input files as arguments)")
-        sys.exit(1)
+    logging.basicConfig(
+        format='%(asctime)s - %(message)s',
+        datefmt='%d-%b-%y %H:%M:%S',
+        level=logging.INFO
+    )
+    parser = argparse.ArgumentParser(description='Creates a ONE scenario from a GTFS feed. If the feed ' +
+                                     'does not provide shape data, the routes can also be matched to and read from ' +
+                                     'an OpenStreetMap file (--osm).')
+    parser.add_argument('gtfs_file', type=str,
+                        help='the GTFS feed to parse (.zip file).')
+    parser.add_argument('--osm', type=str,
+                        help='the .osm file to match routes with if no shapes are present in the gtfs feed.')
+    parser.add_argument('--types', '-t', default='0', type=str,
+                        help='limits the the route types to parse from the gtfs feed, comma separated. ' +
+                        'See https://developers.google.com/transit/gtfs/reference/#routestxt for route type ' +
+                        'definitions. Defaults to 0 (tram routes)')
+    parser.add_argument('--weekday', '-d', default=0, type=int,
+                        help='limits the weekdays to parse trip for from the gtfs feed.' +
+                        'Options: 0 - only working days (mo-fri), 1 - only saturdays, 2 - only sundays. ' +
+                        'Defaults to 0')
+    parser.add_argument('--max_exceptions', '-e', default=180, type=int,
+                        help='limits the days to parse trips for to service dates with a maximum number of exceptions.' +
+                        'This way irregular service times with a lot of exceptions can be filtered out. ' +
+                        'Defaults to 180 (more than half the year needs to be regular)')
 
-    main(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
+    args = parser.parse_args()
+    main(args)
