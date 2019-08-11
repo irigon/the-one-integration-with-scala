@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import zipfile, sys
+import logging
 from lib.gtfs.consts import *
 from typing import List, Tuple, Dict
 import editdistance
 import pandas as pd
 from pandas import DataFrame
+
 
 class GTFSReader:
     """
@@ -19,7 +21,7 @@ class GTFSReader:
     trips: DataFrame
     stops: DataFrame
     routes: DataFrame
-    shapes: DataFrame
+    shapes: DataFrame = None
 
     ref_trips: DataFrame
     route_types: List[int]
@@ -37,17 +39,24 @@ class GTFSReader:
                 to_read = GTFS_FILES
                 if not with_shapes:
                     to_read.pop('shapes')
-                for name, file in to_read.items():
+                for name, (file, required) in to_read.items():
                     with z.open(file) as fp:
                         df = pd.read_csv(fp, **PD_CSV_OPTIONS)
+                        if required and df.empty:
+                            raise ValueError()
                         setattr(self, name, df)
         except zipfile.BadZipFile:
-            print(gtfs_file, 'is not a zipfile, please specify zipfile to read gtfs from')
+            logging.error(gtfs_file + ' is not a zipfile, please specify zipfile to read gtfs from')
             sys.exit(1)
         except KeyError:
-            print(file, 'is missing in', gtfs_file)
+            logging.error(file + ' is missing in ' + gtfs_file)
             if name == 'shapes':
-                print('Use a gtfs-osm mapper like pfaedle to import shapes or use the osm-mode directly')
+                logging.info('Use a gtfs-osm mapper like pfaedle to import shapes or use the osm-mode directly')
+            sys.exit(1)
+        except ValueError:
+            logging.error(file + ' is empty but required.')
+            if name == 'shapes':
+                logging.info('Use a gtfs-osm mapper like pfaedle to import shapes or use the osm-mode directly')
             sys.exit(1)
 
         self.route_types = route_types
@@ -80,7 +89,7 @@ class GTFSReader:
         # remove first duration_to entry and replace it with 0 since the first stop
         # has no previous stop to calculate the duration from
         durations = r.groupby(ROUTE_NAME)[DURATION_TO] \
-                     .apply(lambda ds: [0]+list(ds)[1:])
+            .apply(lambda ds: [0] + list(ds)[1:])
         return dict(durations)
 
     def schedule(self, weekday_type: int, max_exceptions: int) -> Dict[str, List[Tuple[str, int, int]]]:
@@ -311,7 +320,7 @@ class GTFSReader:
         ref_trips = ref_trips[
             (ref_trips[STOPS_SIZE_X] == ref_trips[STOPS_SIZE_Y]) |
             (ref_trips[STOPS_SIZE_X] == ref_trips.groupby([ROUTE_NAME])[STOPS_SIZE_X].transform(max))
-        ]
+            ]
 
         # to match the reference route to one trip, first/last stop names
         # have to be compared. These are not neccesarily expected to be equal, but similar.
@@ -351,8 +360,8 @@ class GTFSReader:
                     (s[THU] == 1) &
                     (s[FRI] == 1)
             ) |
-            (       # When there's not a service date that covers all work days
-                    # fall back to just using monday
+            (  # When there's not a service date that covers all work days
+                # fall back to just using monday
                     (weekday_type == 0) &
                     (s[MON] == 1)
             ) |
@@ -364,7 +373,7 @@ class GTFSReader:
                     (weekday_type == 2) &
                     (s[SUN] == 1)
             )
-        ]
+            ]
 
     # filter by exeption count
     def __filter_exceptions(self, services: DataFrame, days_treshold: int) -> DataFrame:
@@ -384,7 +393,7 @@ class GTFSReader:
         self.routes = self.routes[self.routes[ROUTE_TYPE].isin(self.route_types)]
         # define needed trip fields, add shape_id if shapes are present
         trip_fields = [ROUTE_ID, SERVICE_ID, TRIP_ID, DIRECTION_ID]
-        if not self.shapes.empty:
+        if self.shapes is not None:
             trip_fields.append(SHAPE_ID)
         # merge trips on routes
         self.trips = pd.merge(
@@ -400,7 +409,7 @@ class GTFSReader:
         )
         # define needed stop_times fields, add shape_id if shapes are present
         stop_times_fields = [TRIP_ID, ARR_TIME, STOP_ID, STOP_SEQ]
-        if not self.shapes.empty:
+        if self.shapes is not None:
             stop_times_fields.append(SHAPE_DIST)
         # merge trips on stop_times
         self.stop_times = pd.merge(
@@ -458,9 +467,11 @@ class GTFSReader:
             out[r[1]].append((r[2], r[3]))
         return out
 
+
 def index_stops(row, col):
     i = row[STOP_NAME].index(row[col])
     return i
+
 
 def mod_hours(row):
     t = row[ARR_TIME_FIRST]
@@ -472,10 +483,12 @@ def mod_hours(row):
         )
     return t
 
+
 def distance(s1, s2):
     maxlen = max(len(s1), len(s2))
     dist = editdistance.eval(s1, s2)
     return (maxlen - dist) / maxlen
+
 
 def score(row):
     d_first = distance(row[STOP_NAME_FIRST], row[REF_NAME_FIRST])
