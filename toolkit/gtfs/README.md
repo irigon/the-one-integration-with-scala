@@ -13,27 +13,31 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
   * `pip install -r requirements.txt`
 
 ## Create a new scenario
-* Find a GTFS feed for the city you want to import into the ONE. Good resources for public feeds are [transit.land/feed-registry]() or [transitfeeds.com]()
-* Check if your selected feed includes shape data (`shapes.txt` exists inside the feed zip and is populated). If shape data does not exist it can be retreived from OpenStreetMap (See [Download map data](#Download-map-data)). To process osm data there are currently two options:
+* Find a GTFS feed for the city you want to import into the ONE.  
+  Good resources for public feeds are [transit.land/feed-registry](http://transit.land/feed-registry) or [transitfeeds.com](http://transitfeeds.com)
+* Check if your selected feed includes shape data  
+  (`shapes.txt` exists inside the feed zip and is populated)  
+  If shape data does not exist it can be retreived from OpenStreetMap (See [Download map data](#Download-map-data)).  
+  
+  To process osm data there are currently two options:
     * Create gtfs shapes from osm data by map-matching (see [Shape Generation](#Shape-Generation))
-    * Supply osm data directly to scenario.py to create route paths. This should be used as a fallback method when the shape enrichment was not successful as it is more error prone.
+    * Supply osm data directly to `scenario.py` to create route paths. This should be used as a fallback method when the shape enrichment was not successful as it is more error prone.
 * Generate ONE settings configuration and all needed files with 
     ```
     python scenario.py myfeed.gtfs
     ```
-    or for direct osm processing:
+    or for direct osm processing:  
     ```
     python scenario.py --osm map.osm myfeed.zip
     ```
     This will create the needed files in `$ONE/data/myfeed` and a ONE settings file at `$ONE/myfeed_settings.txt` 
-    (with `$ONE` being the path of your ONE installation). Then switch into the repository root and run
+    (with `$ONE` being the path of your ONE installation). 
 * Switch into the ONE directory and run the scenario with
     ```
-    cd ..
     ./one.sh myfeed_settings.txt
     ```
 
-NOTE: the generated settings file contains only settings needed for the generated files. To start a valid ONE scenario a fallback `default_settings.txt` can (and must) be used to define general settings like router or time options.
+NOTE: the settings config contains only settings needed for the generated files. To start a valid ONE scenario a fallback `default_settings.txt` can (and must) be used to define general settings like router or time configuration.
 
 
 ### Options
@@ -64,10 +68,10 @@ optional arguments:
 
 ## Shape Generation
 There exist multiple projects with the aim to import OSM geodata into GTFS shapes.
-[ad-freiburg/pfaedle](github.com/ad-freiburg/pfaedle) seems to be the most reliable and best performing option that was evaluated here.
+[ad-freiburg/pfaedle](http://github.com/ad-freiburg/pfaedle) seems to be the most reliable and best performing option that was evaluated here.
 The program reads in a gtfs and osm file and attemps to create a shape for each trip of the feed via map-matching. 
 To enrich your feed with pfaedle:
-* install pfaedle (see the project [README](github.com/ad-freiburg/pfaedle) for instructions)
+* install pfaedle (see the project [README](http://github.com/ad-freiburg/pfaedle) for instructions)
 * extract your feed archive to a separate directory
     ```bash
     unzip gtfs.zip -d gtfs
