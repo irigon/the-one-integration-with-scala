@@ -233,6 +233,9 @@ class TransitControlSystem {
 		if (schedule == null) {
 			return defaultTrip(time);
 		}
+		if (schedule.size() == 0)
+			throw new SettingsError("There is a host group that has a higher number of hosts than "+
+					"trips in the respective schedule. nrofHosts must always be <= count of trips");
 		int key = schedule.ceilingKey(time);
 		return schedule.remove(key);
 	}

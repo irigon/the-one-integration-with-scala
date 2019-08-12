@@ -12,8 +12,6 @@ class GTFSReader:
     """
     Reads in files from a GTFS dataset in zip format as dataframes
     to allow for fast and simple querying.
-
-    :param gtfs_file : path to the zip file containing a GTFS dataset.
     """
     services: DataFrame
     exceptions: DataFrame
@@ -46,21 +44,32 @@ class GTFSReader:
                             raise ValueError()
                         setattr(self, name, df)
         except zipfile.BadZipFile:
-            logging.error(gtfs_file + ' is not a zipfile, please specify zipfile to read gtfs from')
+            logging.error('error: '+gtfs_file+' is not a zipfile, please specify zipfile to read gtfs from')
             sys.exit(1)
         except KeyError:
-            logging.error(file + ' is missing in ' + gtfs_file)
+            logging.error('error: '+file+' is missing in '+gtfs_file)
             if name == 'shapes':
                 logging.info('Use a gtfs-osm mapper like pfaedle to import shapes or use the osm-mode directly')
             sys.exit(1)
         except ValueError:
-            logging.error(file + ' is empty but required.')
+            logging.error('error: '+file+' is empty but required.')
             if name == 'shapes':
                 logging.info('Use a gtfs-osm mapper like pfaedle to import shapes or use the osm-mode directly')
             sys.exit(1)
 
+        if with_shapes:
+            self.check_shapes()
         self.route_types = route_types
         self.__merge_data()
+
+    def check_shapes(self):
+        if SHAPE_DIST not in self.stop_times or SHAPE_DIST not in self.shapes:
+            logging.error("error: both stop_times.txt and shapes.txt need to have shape_dist_traveled column")
+            sys.exit(1)
+        if (len(self.stop_times[SHAPE_DIST].value_counts()) == 0) or \
+                (len(self.shapes[SHAPE_DIST].value_counts()) == 0):
+            logging.error("error: shape_dist_traveled column in stop_times.txt and shapes.txt must not be empty")
+            sys.exit(1)
 
     def set_route_types(self, types: List[int]):
         self.route_types = types
@@ -361,7 +370,7 @@ class GTFSReader:
                     (s[FRI] == 1)
             ) |
             (  # When there's not a service date that covers all work days
-                # fall back to just using monday
+               # fall back to just using monday
                     (weekday_type == 0) &
                     (s[MON] == 1)
             ) |
@@ -383,7 +392,8 @@ class GTFSReader:
         counts = self.exceptions.groupby(SERVICE_ID) \
             .count() \
             .reset_index()
-        s = pd.merge(s, counts, on=SERVICE_ID)
+        s = pd.merge(s, counts, on=SERVICE_ID, how='left')
+        s.fillna(0, inplace=True)
         s = s.loc[(s[DATE] < days_treshold)]
         del s[TYPE]
         return s

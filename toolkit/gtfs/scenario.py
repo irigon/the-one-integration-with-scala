@@ -113,7 +113,7 @@ def main(args):
     hosts_total = 0
     for r in routes:
         name = r.name
-        if not schedule.get(name) or durations.get(name):
+        if not schedule.get(name) or not durations.get(name):
             continue
 
         # transform the coordinates from lat,long
@@ -133,7 +133,9 @@ def main(args):
         g.set('routeFile', stops_file.format(name))
         g.set('scheduleFile', schedule_file.format(name))
         g.set('routeType', 2)
-        g.set('nrofHosts', hosts)
+        # if there are less trips for this route than hosts specified,
+        # use the amount of trips as host count
+        g.set('nrofHosts', min(hosts, len(schedule.get(r.name))))
         g.set_okmap(nodes_file.format(name))
         s.add_group(g)
 

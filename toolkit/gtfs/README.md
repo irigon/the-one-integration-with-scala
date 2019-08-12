@@ -16,8 +16,8 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
 * Find a GTFS feed for the city you want to import into the ONE.  
   Good resources for public feeds are [transit.land/feed-registry](http://transit.land/feed-registry) or [transitfeeds.com](http://transitfeeds.com)
 * Check if your selected feed includes shape data  
-  (`shapes.txt` exists inside the feed zip and is populated)  
-  If shape data does not exist it can be retreived from OpenStreetMap (See [Download map data](#Download-map-data)).  
+  (`shapes.txt` exists inside the feed and both `shapes.txt` and `stop_times.txt` need non-empty `shape_dist_traveled` columns)  
+  If shape data does not exist or is incomplete it can be retreived from OpenStreetMap (See [Download map data](#Download-map-data)).  
   
   To process osm data there are currently two options:
     * Create gtfs shapes from osm data by map-matching (see [Shape Generation](#Shape-Generation))
@@ -126,4 +126,16 @@ You can paste the query on [overpass-turbo](https://overpass-turbo.eu/) to get a
 To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}` with the query 
 urlencoded or download it via the overpass-turbo website ("Export" -> "raw data directly from Overpass API").
 
-
+## Example scenario
+To quickly test out this toolkit you can use the GTFS feed of Helsinki and the following steps:
+```bash
+wget -O hsl.zip https://objectstorage.fi-1.cloud.global.fujitsu.com/v1/AUTH_75240ea7e6fd4ca29b6b4b4d3d227fbe/gtfs.hsl/hsl_20130201T115528Z.zip
+wget -O hsl.osm https://overpass-api.de/api/interpreter\?data\=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29-%3E.searchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area.searchArea%29%3B%29%3Bout%20body%3B%3E%3Bout%20body%20qt%3B
+unzip hsl.zip -d hsl
+pfaedle -x hsl.osm -D --inplace hsl
+zip -rj hsl_matched.zip hsl/*
+python scenario.py -o helsinki hsl_matched.zip
+cd ../..
+./one.sh helsinki_settings.txt
+```
+If you get the error `Couldn't find class 'movement.TransitMapMovement'` then you probably copied over the classes of this repo without recompiling the-ONE. Run the install script and then try again.
