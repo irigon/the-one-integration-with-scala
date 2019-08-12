@@ -51,8 +51,9 @@ optional arguments:
                         present in the gtfs feed.
   --types TYPES, -t TYPES
                         limits the the route types to parse from the gtfs
-                        feed, comma separated. See https://developers.google.com/transit/gtfs/reference/#routestxt
-                        for route type definitions. Defaults to 0 (tram routes)
+                        feed, comma separated. See https://developers.google.c
+                        om/transit/gtfs/reference/#routestxt for route type
+                        definitions. Defaults to 0 (tram routes)
   --weekday WEEKDAY, -d WEEKDAY
                         limits the weekdays to parse trip for from the gtfs
                         feed.Options: 0 - only working days (mo-fri), 1 - only
@@ -63,7 +64,17 @@ optional arguments:
                         service times with a lot of exceptions can be filtered
                         out. Defaults to 180 (more than half the year needs to
                         be regular)
-
+  --nhosts NHOSTS, -n NHOSTS
+                        sets the number of hosts that will be created in each
+                        host group.Use "auto" to determine the minimum number
+                        of hosts necessary to respect the whole schedule
+                        correctly (all trips are carried out). Use this with
+                        caution as it can yield to a large number of hosts in
+                        your scenario. Defaults to 5.
+  --name NAME, -o NAME  sets the name of this scenario. Will also be used for
+                        a sub-directory containing all needed files and for
+                        the file name of the settings config. Defaults to the
+                        gtfs-feed filename
 ```
 
 ## Shape Generation
