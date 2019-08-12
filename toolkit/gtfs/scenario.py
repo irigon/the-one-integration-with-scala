@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys, os, math
+import datetime
+import time
 import argparse
 import logging
 from os import path
@@ -17,8 +19,8 @@ NODES_FILE = '{}_nodes.wkt'
 STOPS_FILE = '{}_stops.csv'
 SCHEDULE_FILE = '{}_schedule.csv'
 STATIONS_FILE = 'stations.wkt'
-NR_OF_HOSTS = 1
 HOST_ID_DELIM = '_'
+MIN_SWITCH_TIME = 60  # seconds
 
 def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
     # reads all routes (relations with tag[k="type"][v="route"])
@@ -54,7 +56,7 @@ def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
     return routes
 
 def main(args):
-    scenario = basename_without_ext(args.gtfs_file)
+    scenario = args.name or basename_without_ext(args.gtfs_file)
     route_types = args.types.split(',')
     with_shapes = not args.osm
 
@@ -87,7 +89,7 @@ def main(args):
     if not path.isdir(out_dir):
         os.mkdir(out_dir)
 
-    logging.info("creating ONE scenario and writing files")
+    logging.info('creating ONE scenario "'+scenario+'" and writing files')
 
     nodes_file = path.join(out_dir, NODES_FILE)
     stops_file = path.join(out_dir, STOPS_FILE)
@@ -98,13 +100,29 @@ def main(args):
     s = ScenarioSettings(scenario)
     stations = set()
 
+    nhosts = None
+    min_hosts = None
+    if args.nhosts.isdigit():
+        nhosts = int(args.nhosts)
+    elif args.nhosts == 'auto':
+        min_hosts = determine_min_hosts(schedule, durations)
+    else:
+        logging.error('invalid value of parameter nhosts. must be either positive int or "auto"')
+        exit(1)
+
+    hosts_total = 0
     for r in routes:
+        name = r.name
+        if not schedule.get(name) or durations.get(name):
+            continue
+
         # transform the coordinates from lat,long
         # to x,y tuples on projection pane
         nodes = proj.transform_coords(r.nodes)
         stops = proj.transform_coords(r.stops)
 
-        name = r.name
+        hosts = nhosts if nhosts is not None else min_hosts.get(name)
+        hosts_total += hosts
         stations.update(stops)
 
         # for each route, create a host group.
@@ -115,7 +133,7 @@ def main(args):
         g.set('routeFile', stops_file.format(name))
         g.set('scheduleFile', schedule_file.format(name))
         g.set('routeType', 2)
-        g.set('nrofHosts', NR_OF_HOSTS)
+        g.set('nrofHosts', hosts)
         g.set_okmap(nodes_file.format(name))
         s.add_group(g)
 
@@ -166,7 +184,7 @@ def main(args):
     ))
     s.set('Events1.hosts', '{min},{max}'.format(
         min=0,
-        max=len(routes) * NR_OF_HOSTS + len(stations) - 1
+        max=hosts_total + len(stations) - 1
     ))
 
     # write settings contents to file in ONE project root
@@ -178,6 +196,50 @@ def basename_without_ext(file: str) -> str:
     base = path.basename(file)
     base = path.splitext(base)[0]
     return str(base)
+
+def determine_min_hosts(schedule, durations):
+    min_hosts = {}
+    for route, trips in schedule.items():
+        durs = durations.get(route)
+
+        # convert start time of each trip from time to seconds
+        trips = trips.copy()
+        for i, trip in enumerate(trips):
+            t_start, h_start, h_end = trip
+            t_seconds = time_to_seconds(t_start)
+            trips[i] = t_seconds, h_start, h_end
+
+        visited = []
+        hosts = 0
+
+        for i, trip in enumerate(trips):
+            if i in visited:
+                continue
+            hosts += 1
+            t_end, h_end, _ = trip
+            t_end -= MIN_SWITCH_TIME
+
+            for j, next_trip in enumerate(trips[i:]):
+                if i+j in visited:
+                    continue
+                t_start_next, h_start_next, h_end_next = next_trip
+
+                if t_start_next >= t_end + MIN_SWITCH_TIME \
+                        and h_start_next == h_end:
+                    visited.append(i+j)
+                    durs_start = min(h_start_next, h_end_next)
+                    durs_end = max(h_start_next, h_end_next) + 1
+                    next_trip_dur = sum(durs[durs_start:durs_end]) * 60
+                    t_end = t_start_next + next_trip_dur
+                    h_end = h_end_next
+
+        min_hosts[route] = hosts
+    return min_hosts
+
+def time_to_seconds(time_str):
+    t = time.strptime(time_str,'%H:%M:%S')
+    secs = datetime.timedelta(hours=t.tm_hour,minutes=t.tm_min,seconds=t.tm_sec).total_seconds()
+    return int(secs)
 
 
 if __name__ == '__main__':
@@ -205,6 +267,14 @@ if __name__ == '__main__':
                         help='limits the days to parse trips for to service dates with a maximum number of exceptions.' +
                         'This way irregular service times with a lot of exceptions can be filtered out. ' +
                         'Defaults to 180 (more than half the year needs to be regular)')
+    parser.add_argument('--nhosts', '-n', default='5', type=str,
+                        help='sets the number of hosts that will be created in each host group.' +
+                        'Use "auto" to determine the minimum number of hosts necessary to respect the whole schedule ' +
+                        'correctly (all trips are carried out). Use this with caution as it can yield to a large ' +
+                        'number of hosts in your scenario. Defaults to 5.')
+    parser.add_argument('--name', '-o', default='', type=str,
+                        help='sets the name of this scenario. Will also be used for a sub-directory containing all ' +
+                        'needed files and for the file name of the settings config. Defaults to the gtfs-feed filename')
 
     args = parser.parse_args()
     main(args)
