@@ -192,7 +192,8 @@ class GTFSReader:
         # build output dict
         out = {r: [] for r in start_times[ROUTE_NAME].unique()}
         for r in start_times.itertuples():
-            out[r[1]].append(tuple(r[2:]))
+            if r.stop_name_first != r.stop_name_last:
+                out[r[1]].append(tuple(r[2:]))
         return out
 
     def build_ref_trips(self):
