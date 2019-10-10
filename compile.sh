@@ -1,3 +1,4 @@
+#set -x
 targetdir=target
 
 if [ ! -d "$targetdir" ]; then mkdir $targetdir; fi

@@ -15,3 +15,9 @@ doc/package-list
 .project
 /target/
 .settings/org.eclipse.*
+
+# Graphics, it is copied over with maven
+src/gui/buttonGraphics/buttonGraphics/
+
+# Intellij files
+.idea
