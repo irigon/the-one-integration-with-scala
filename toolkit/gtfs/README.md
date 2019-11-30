@@ -7,7 +7,8 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
   
 ## Get started
 * First create a new virtualenv:
-  * `virtualenv venv`
+  * `cd $THE_ONE_DIR/toolkit/gtfs`
+  * `python -m venv venv`
   * `source venv/bin/activate`
 * Then install dependencies:
   * `pip install -r requirements.txt`

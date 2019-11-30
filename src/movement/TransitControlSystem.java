@@ -91,6 +91,8 @@ class TransitControlSystem {
 				}
 
 				int timeTo = Integer.parseInt(columns[1]) * 60;
+                // if travel takes less than one minute, than 30s
+                if (timeTo == 0) timeTo = 30;
 
 				TransitStop next = new TransitStop(node, timeTo);
 				next.setPrev(previous);
