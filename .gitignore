@@ -15,3 +15,10 @@ doc/package-list
 .project
 /target/
 .settings/org.eclipse.*
+/bin/
+
+# gtfs
+toolkit/gtfs/lib/__pycache__/
+toolkit/gtfs/lib/gtfs/__pycache__/
+toolkit/gtfs/venv/
+
