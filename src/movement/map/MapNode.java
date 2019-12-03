@@ -4,6 +4,7 @@
  */
 package movement.map;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 
@@ -142,5 +143,8 @@ public class MapNode implements Comparable<MapNode> {
 	public int compareTo(MapNode o) {
 		return this.getLocation().compareTo((o).getLocation());
 	}
-
+	
+	public int getType() {
+		return type;
+	}
 }

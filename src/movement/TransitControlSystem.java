@@ -35,6 +35,8 @@ class TransitControlSystem {
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
 	TransitControlSystem(String stopsFile, String scheduleFile, SimMap map, int okMapType) {
+		// --- Debug
+		System.out.println("Reading " + stopsFile);
 		stops = readStops(stopsFile, map);
 		TransitStop start = stops.get(0);
 		TransitStop end = stops.get(stops.size() - 1);
@@ -45,6 +47,10 @@ class TransitControlSystem {
 		    routeType = PINGPONG;
         }
 
+		// Debug -- Order map neighbors from more specific to more general
+		
+		
+		
         buildPaths(stops, okMapType);
         schedule = readSchedule(scheduleFile);
         r = new Random();
@@ -83,6 +89,8 @@ class TransitControlSystem {
 					c.setLocation(c.getX(), -c.getY());
 				}
 				c.translate(xOffset, yOffset);
+				// --- debugging:
+				System.out.println("Original coord : " + coords[0] + "," + coords[1] + " --> " + c.toString());
 
 				MapNode node = map.getNodeByCoord(c);
 				if (node == null) {
@@ -173,6 +181,33 @@ class TransitControlSystem {
 		return schedule;
 	}
 
+	private MapNode next_stop_is_a_neighbor(List<MapNode> neighbors, MapNode nextStop) {
+		for (MapNode n : neighbors) {
+			if (n.equals(nextStop)) {
+				return n;
+			}
+		}
+		return null;
+	}
+
+	private MapNode get_next_neighbor(List<MapNode> neighbors, MapNode lastWayP, int mapType) {
+		MapNode candidate = null;
+		for (MapNode n : neighbors) {
+			if (!n.isType(mapType) || n.equals(lastWayP)) {
+				continue;
+			}
+			if (candidate == null) {
+				candidate = n;
+			} else {
+				if (Integer.bitCount(n.getType()) < Integer.bitCount(candidate.getType())) {
+					candidate = n;
+				}
+			}
+		}
+		assert (candidate != null);
+		return candidate;
+	}
+	
 	private void buildPaths(List<TransitStop> stops, int okMapType) {
 		TransitStop currentStop = stops.get(0);
 		TransitStop nextStop = currentStop.getNext();
@@ -184,11 +219,50 @@ class TransitControlSystem {
 		double distance = 0;
         TransitWay p = new TransitWay();
 
-		nodes:
+		//nodes:
+		System.out.println("Stop Node:" + currentNode.toString());
 		while (!currentNode.equals(endNode)) {
 			p.addWaypoint(currentNode.getLocation());
+			
+			MapNode n = next_stop_is_a_neighbor(currentNode.getNeighbors(), nextStopNode);
+			
+			if (n != null) { // if nextStopNode is a neighbor...
+				System.out.println("Stop Node:" + n.toString());
+				//p.addWaypoint(n.getLocation());
+				distance += getDistance(currentNode, n);
 
-			for (MapNode n : currentNode.getNeighbors()) {
+				p.setDuration(nextStop.timeTo);
+				p.setDistance(distance);
+
+				currentStop.setForward(p);
+				nextStop.setBackward(p.reversed());
+
+				distance = 0;
+				p = new TransitWay();
+
+				if (!n.equals(endNode)) {
+					currentStop = nextStop;
+					nextStop = nextStop.getNext();
+					nextStopNode = nextStop.node;
+				}
+				lastWayPoint = currentNode;
+				currentNode = n;	
+			} 
+			
+			/**
+			 * StopNode is not neighbor. Get the most specific neighbor that is not lastWayPoint
+			 * If 2 neighbors belong to line 4 and a third to line 4 and 6, we should prioritize the one from line 4.
+			 */
+			
+			else { 
+				MapNode neighbor = get_next_neighbor(currentNode.getNeighbors(), lastWayPoint, okMapType);
+				System.out.println("Neighbor:" + neighbor.toString() + ", endNode:" + endNode.toString());
+				lastWayPoint = currentNode;
+				currentNode = neighbor;
+				distance += getDistance(lastWayPoint, currentNode);		
+			}
+			
+			/*for (MapNode n : currentNode.getNeighbors()) {
 				if (n.equals(nextStopNode)) {
 					p.addWaypoint(n.getLocation());
 					distance += getDistance(currentNode, n);
@@ -218,7 +292,9 @@ class TransitControlSystem {
 					continue nodes;
 				}
 			}
+			*/
 		}
+		System.out.println("Done.");
 	}
 
 	private double getDistance(MapNode n1, MapNode n2) {
@@ -283,3 +359,4 @@ class TransitControlSystem {
 		);
 	}
 }
+
