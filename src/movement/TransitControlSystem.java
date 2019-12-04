@@ -256,7 +256,7 @@ class TransitControlSystem {
 			
 			else { 
 				MapNode neighbor = get_next_neighbor(currentNode.getNeighbors(), lastWayPoint, okMapType);
-				System.out.println("Neighbor:" + neighbor.toString() + ", endNode:" + endNode.toString());
+				System.out.println("Node:" + currentNode.toString() + ", Neighbor:" + neighbor.toString() + ", endNode:" + endNode.toString());
 				lastWayPoint = currentNode;
 				currentNode = neighbor;
 				distance += getDistance(lastWayPoint, currentNode);		
@@ -319,16 +319,21 @@ class TransitControlSystem {
 	}
 
 	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop) {
-		if (schedule == null) {
+		if (schedule.values().isEmpty()) {
+			return null;
+		}
+		if (schedule == null ) {
 			return defaultTripForStop(time, currentStop);
 		}
 		Integer key = schedule.ceilingKey(time);
-		while (!schedule.get(key).getFirstStop().equals(currentStop)) {
-			key = schedule.higherKey(key);
-			if (key == null)
-				return null;
-		}
-		return schedule.remove(key);
+		
+        while (!schedule.get(key).getFirstStop().equals(currentStop)) {
+            key = schedule.higherKey(key);
+            if (key == null)
+                return null;
+        }
+		
+			return schedule.remove(key);
 	}
 
 	private TransitTrip defaultTrip(int time) {
@@ -350,6 +355,7 @@ class TransitControlSystem {
 	}
 
 	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
+		System.out.println ("WARNING ---- default time trip -- error?");
 		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
 		return new TransitTrip(
 				time,
