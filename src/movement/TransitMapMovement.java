@@ -37,12 +37,15 @@ public class TransitMapMovement extends MapBasedMovement implements
 	 */
 	public TransitMapMovement(Settings settings) {
 		super(settings);
+		Settings settingsMovement = new Settings(MAP_BASE_MOVEMENT_NS);
 		String stopsFile = settings.getSetting(ROUTE_FILE_S);
 		String scheduleFile = settings.getSetting(SCHEDULE_FILE_S);
+		String mapFile = settingsMovement.getSetting(FILE_S + getOkMapNodeTypes()[0]);
 
 		system = new TransitControlSystem(
 				stopsFile,
 				scheduleFile,
+				mapFile,
                 getMap(),
                 getOkMapNodeTypes()[0]
         );

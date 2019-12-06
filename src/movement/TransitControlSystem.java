@@ -2,11 +2,14 @@ package movement;
 
 import core.Coord;
 import core.SettingsError;
+import core.SimError;
+import input.WKTMapReader;
 import movement.map.MapNode;
 import movement.map.SimMap;
 import movement.TransitTrip.TripDirection;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,9 +37,7 @@ class TransitControlSystem {
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
-	TransitControlSystem(String stopsFile, String scheduleFile, SimMap map, int okMapType) {
-		// --- Debug
-		System.out.println("Reading " + stopsFile);
+	TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, int okMapType) {
 		stops = readStops(stopsFile, map);
 		TransitStop start = stops.get(0);
 		TransitStop end = stops.get(stops.size() - 1);
@@ -47,19 +48,23 @@ class TransitControlSystem {
 		    routeType = PINGPONG;
         }
 
-		// Debug -- Order map neighbors from more specific to more general
-		
-		
-		
-        buildPaths(stops, okMapType);
+        buildPaths(stops, nodesFile, map, okMapType);
         schedule = readSchedule(scheduleFile);
         r = new Random();
 	}
-
-	private List<TransitStop> readStops(String fileName, SimMap map) {
-		boolean mirror = map.isMirrored();
+	
+	private void updateCoordinate(SimMap map, Coord c) {
 		double xOffset = map.getOffset().getX();
 		double yOffset = map.getOffset().getY();
+
+		if (map.isMirrored()) {
+			c.setLocation(c.getX(), -c.getY());
+		}
+		c.translate(xOffset, yOffset);
+
+	}
+
+	private List<TransitStop> readStops(String fileName, SimMap map) {
 		List<TransitStop> stops = new ArrayList<>();
 
 		TransitStop previous = null;
@@ -85,12 +90,7 @@ class TransitControlSystem {
 						Double.valueOf(coords[0]),
 						Double.valueOf(coords[1])
 				);
-				if (mirror) {
-					c.setLocation(c.getX(), -c.getY());
-				}
-				c.translate(xOffset, yOffset);
-				// --- debugging:
-				System.out.println("Original coord : " + coords[0] + "," + coords[1] + " --> " + c.toString());
+				updateCoordinate(map, c);
 
 				MapNode node = map.getNodeByCoord(c);
 				if (node == null) {
@@ -204,33 +204,119 @@ class TransitControlSystem {
 				}
 			}
 		}
-		assert (candidate != null);
+		if (candidate == null) {
+		    throw new IllegalArgumentException("candidate should not be null");
+		}
 		return candidate;
 	}
 	
-	private void buildPaths(List<TransitStop> stops, int okMapType) {
+	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, int okMapType) {
+		SimMap mapFromDisk;
+
+		List<MapNode> nodeList = new ArrayList<MapNode>();
+		
+		WKTMapReader r = new WKTMapReader(true);
+		try {
+			r.addPaths(new File(nodesFile), okMapType);
+		} catch (IOException e) {
+			throw new SimError(e.toString(),e);
+		}
+		mapFromDisk = r.getMap();
+		MapNode currNode = null;
+		MapNode startNode = stops.get(0).node;
+
+		for (MapNode mn : mapFromDisk.getNodes()) {
+			updateCoordinate(map, mn.getLocation());
+			//System.out.println("mn : " + mn.getLocation() + ", stop0 : " + startNode.getLocation() );
+			if (mn.getLocation().equals(startNode.getLocation())) {
+				currNode = mn;
+			}
+		}
+
+		if (currNode == null) {
+			System.out.println("Error - inicial node not found in nodes file.");
+			System.exit(1);
+		}
+		
+		// Walk the path up to the end destination, creating a list of nodes
+		// Return the list.
+		nodeList.add(map.getNodeByCoord(currNode.getLocation()));
+				
+		MapNode lastNode = stops.get(stops.size()-1).node;
+		MapNode lastWayNode = null;
+		
+		while(currNode.compareTo(lastNode) != 0) {
+			// each node has at most 2 neighbors
+			if (currNode.getNeighbors().size() > 2) {
+				System.out.println("A node should have, at this point, at most 2 neighbors.");
+				System.exit(1);				
+			}
+			// the neighbor is different than last
+			for (MapNode neighbor: currNode.getNeighbors()) {
+				if (lastWayNode == null || neighbor.compareTo(lastWayNode) != 0) {
+					Coord c = neighbor.getLocation();
+					MapNode n = map.getNodeByCoord(c);
+					if (n != null) {
+						nodeList.add(n);
+					} else {
+						throw new SettingsError("Stop " + c + " is not a valid Map node");
+					}
+					lastWayNode = currNode;
+					currNode = neighbor;
+					break;
+				}
+			}
+		}
+		
+		return nodeList;
+	}
+
+	
+	/**
+	 * 
+	 * @param stops
+	 * @param map 
+	 * @param okMapType
+	 * 
+	 * Assumes that the order in the nodes file is correct
+	 * This is necessary:
+	 * 
+	 *                 -------------------------
+	 * 	              /                         \
+	 * X ----------- y ----------- z ----------- w ----------- X
+	 *              /                             \
+	 *             o                               p
+	 *
+	 * y is neighbor of X (last hop), z, and w.
+	 * A node should not have two neighbors forward... 
+	 * The information that w is neighbor due to line o-y-w-p is lost.
+	 * 
+	 * Solution: assume that the file nodes are ordered and read the
+	 * right order direct from file
+	 */
+	
+	private void buildPaths(List<TransitStop> stops, String nodesFile, SimMap map, int okMapType) {
 		TransitStop currentStop = stops.get(0);
 		TransitStop nextStop = currentStop.getNext();
 		MapNode currentNode = currentStop.node;
 		MapNode nextStopNode = nextStop.node;
+		List<MapNode> orderedPath = readPath(nodesFile, stops, map, okMapType);
 
 		MapNode endNode = stops.get(stops.size() - 1).node;
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
         TransitWay p = new TransitWay();
 
-		//nodes:
-		System.out.println("Stop Node:" + currentNode.toString());
+		//System.out.println("Stop Node:" + currentNode.toString());
+		int index = 0;
+		
 		while (!currentNode.equals(endNode)) {
 			p.addWaypoint(currentNode.getLocation());
-			
-			MapNode n = next_stop_is_a_neighbor(currentNode.getNeighbors(), nextStopNode);
-			
-			if (n != null) { // if nextStopNode is a neighbor...
-				System.out.println("Stop Node:" + n.toString());
-				//p.addWaypoint(n.getLocation());
-				distance += getDistance(currentNode, n);
 
+			MapNode nextNode = orderedPath.get(index+1);
+			distance += getDistance(currentNode, nextNode);
+			// neighbor is nextStopNode
+			if (nextNode.equals(nextStopNode)) {
 				p.setDuration(nextStop.timeTo);
 				p.setDistance(distance);
 
@@ -240,61 +326,17 @@ class TransitControlSystem {
 				distance = 0;
 				p = new TransitWay();
 
-				if (!n.equals(endNode)) {
+				if (!nextNode.equals(endNode)) {
 					currentStop = nextStop;
 					nextStop = nextStop.getNext();
 					nextStopNode = nextStop.node;
 				}
-				lastWayPoint = currentNode;
-				currentNode = n;	
-			} 
-			
-			/**
-			 * StopNode is not neighbor. Get the most specific neighbor that is not lastWayPoint
-			 * If 2 neighbors belong to line 4 and a third to line 4 and 6, we should prioritize the one from line 4.
-			 */
-			
-			else { 
-				MapNode neighbor = get_next_neighbor(currentNode.getNeighbors(), lastWayPoint, okMapType);
-				System.out.println("Node:" + currentNode.toString() + ", Neighbor:" + neighbor.toString() + ", endNode:" + endNode.toString());
-				lastWayPoint = currentNode;
-				currentNode = neighbor;
-				distance += getDistance(lastWayPoint, currentNode);		
 			}
-			
-			/*for (MapNode n : currentNode.getNeighbors()) {
-				if (n.equals(nextStopNode)) {
-					p.addWaypoint(n.getLocation());
-					distance += getDistance(currentNode, n);
-
-					p.setDuration(nextStop.timeTo);
-					p.setDistance(distance);
-
-					currentStop.setForward(p);
-					nextStop.setBackward(p.reversed());
-
-					distance = 0;
-					p = new TransitWay();
-
-					if (!n.equals(endNode)) {
-						currentStop = nextStop;
-						nextStop = nextStop.getNext();
-						nextStopNode = nextStop.node;
-					}
-					lastWayPoint = currentNode;
-					currentNode = n;
-					continue nodes;
-				}
-				if (!n.equals(lastWayPoint) && n.isType(okMapType)) {
-					lastWayPoint = currentNode;
-					currentNode = n;
-					distance += getDistance(lastWayPoint, currentNode);
-					continue nodes;
-				}
-			}
-			*/
+				
+			lastWayPoint = currentNode;
+			currentNode = nextNode;
+			index += 1;
 		}
-		System.out.println("Done.");
 	}
 
 	private double getDistance(MapNode n1, MapNode n2) {
@@ -319,19 +361,30 @@ class TransitControlSystem {
 	}
 
 	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop) {
-		if (schedule.values().isEmpty()) {
-			return null;
-		}
+		// Inexistent schedule (possibly bug?)
 		if (schedule == null ) {
 			return defaultTripForStop(time, currentStop);
 		}
+		// schedule empty or no more schedules
+		else if (schedule.values().isEmpty()) {
+			return null;
+		}
 		Integer key = schedule.ceilingKey(time);
+		if (key == null) {
+			return null;
+		}
 		
-        while (!schedule.get(key).getFirstStop().equals(currentStop)) {
-            key = schedule.higherKey(key);
-            if (key == null)
-                return null;
-        }
+		try {
+			while (!schedule.get(key).getFirstStop().equals(currentStop)) {
+				key = schedule.higherKey(key);
+				if (key == null)
+					return null;
+			}
+		}
+		catch(NullPointerException e) {
+			    // do something other
+			System.out.println("Oops");
+		}		
 		
 			return schedule.remove(key);
 	}
@@ -355,7 +408,7 @@ class TransitControlSystem {
 	}
 
 	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
-		System.out.println ("WARNING ---- default time trip -- error?");
+		System.out.println ("WARNING -- default time trip -- error?");
 		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
 		return new TransitTrip(
 				time,
