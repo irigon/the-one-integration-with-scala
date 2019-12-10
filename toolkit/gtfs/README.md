@@ -25,7 +25,7 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
     * Supply osm data directly to `scenario.py` to create route paths. This should be used as a fallback method when the shape enrichment was not successful as it is more error prone.
 * Generate ONE settings configuration and all needed files with 
     ```
-    python scenario.py myfeed.gtfs
+    python scenario.py myfeed.zip
     ```
     or for direct osm processing:  
     ```
@@ -127,7 +127,58 @@ You can paste the query on [overpass-turbo](https://overpass-turbo.eu/) to get a
 To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}` with the query 
 urlencoded or download it via the overpass-turbo website ("Export" -> "raw data directly from Overpass API").
 
-## Example scenario
+## Example scenarios
+
+### Helsinki
+
+Download the feed (e.g., from [Transitfeeds](https://transitfeeds.com))
+```bash
+$ GTFS_DIR=$THE_ONE_DIR/toolkit/gtfs
+$ cd $GTFS_DIR
+$ mkdir maps
+$ wget -O helsinki.zip https://transitfeeds.com/p/helsinki-regional-transport/735/latest/download
+```
+
+Download the OpenStreetMap from Helsinki (e.g., [hsl.fi/en/opendata](https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf))
+```bash
+$ wget -O helsinki.osm.pbf https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf
+$ curl http://m.m.i24.cc/osmconvert.c | cc -x c - -lz -O3 -o osmconvert
+$ ./osmconvert hsl.osm.pbf > hsl.osm
+```
+
+Or, alternatively from overpass-turbo:
+```bash
+$ wget -O hsl.osm https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29%2D%3E%2EsearchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area%2EsearchArea%29%3B%29%3Bout%3B%3E%3Bout%20qt%3B%0A
+```
+
+Merge GTFS and OSM data using Pfaedle
+```bash
+$ unzip helsinki.zip -d maps/helsinki
+$ pfaedle -x hsl.osm -D maps/helsinki
+```
+
+Create configuration files:
+```bash
+$ cd maps/helsinki/gtfs-out && zip hsl.zip * && cd -
+$ source venv/bin/activate
+$ python scenario.py maps/helsinki/gtfs-out/hsl.zip
+```
+
+Run
+```bash
+$ cd $THE_ONE_DIR
+$ ./compile.sh 
+$ ./one.sh hsl_settings.txt
+```
+
+### Cologne 
+
+### Freiburg
+
+### Berlin
+
+## Known issues to be fixed
+
 To quickly test out this toolkit you can use the GTFS feed of Helsinki and the following steps for a tram scenario:
 ```bash
 wget -O hsl.zip https://objectstorage.fi-1.cloud.global.fujitsu.com/v1/AUTH_75240ea7e6fd4ca29b6b4b4d3d227fbe/gtfs.hsl/hsl_20130201T115528Z.zip

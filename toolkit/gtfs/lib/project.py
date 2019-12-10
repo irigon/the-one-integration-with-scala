@@ -32,13 +32,15 @@ class Projector:
     def transform_coords(self, coords: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
         new_coords = []
         for c in coords:
-            new_coords.append((
-                round(distance.distance(
-                    (c[0], c[1]), (c[0], self.lon_min)
-                ).m, self.precision),
-                round(distance.distance(
+            newC0=round(distance.distance( 
+                    (c[0], c[1]), 
+                    (c[0], self.lon_min)).m, 
+                    self.precision)
+            newC1=round(distance.distance(
                     (c[0], c[1]), (self.lat_min, c[1])
                 ).m, self.precision)
-            ))
+            new_coords.append((newC0,newC1))
+            # Debug
+            #print("({},{}) --> ({},{})".format(c[0], c[1], newC0, newC1))
         return new_coords
 

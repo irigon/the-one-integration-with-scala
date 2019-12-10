@@ -128,6 +128,7 @@ def main(args):
         # for each route, create a host group.
         # this group will contain the moving hosts along the route.
         # nodes_file is the map file this group is ok to move on
+
         g = HostGroup(name, HOST_ID_DELIM)
         g.set('movementModel', 'TransitMapMovement')
         g.set('routeFile', stops_file.format(name))
