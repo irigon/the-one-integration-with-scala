@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+success_list(){
+	echo map_definitions/helpers/success_list
+
+}
+
 search_in_list(){
 	[ "$#" -lt 2 ] && err_ "Wrong number of parameters. Expected: ${FUNCNAME[0]} string_to_search list_file_name"
 	local string=$1
@@ -23,9 +28,8 @@ map_is_ready(){
 	[ "$#" -lt 1 ] && err_ "Wrong number of parameters. Expected: ${FUNCNAME[0]} scenario_name"
 
 	SCENARIO_NAME=$1
-	SUCCESS_LIST=map_definitions/helpers/success_list
 
-	search_in_list $SCENARIO_NAME $SUCCESS_LIST
+	search_in_list $SCENARIO_NAME "$(success_list)"
 }	
 
 ignore_map(){

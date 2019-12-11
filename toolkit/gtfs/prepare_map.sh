@@ -75,5 +75,5 @@ result="Success"
 
 section "$result"
 
-[[ "$result" == "Success" ]] && echo $SCENARIO >> $SUCCESS_LIST
+[[ "$result" == "Success" ]] && echo $SCENARIO >> "$(success_list)"
 
