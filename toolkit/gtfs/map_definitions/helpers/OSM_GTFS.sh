@@ -29,8 +29,9 @@ get_osm(){
 	local OSM_TYPE=$(get_osm_type "$OSM_FILE_COMPLETE_PATH")
 	
 	if [[ "$OSM_TYPE" == "pbf" ]]; then 
+        [ ! -f "osmconvert" ] && $(curl http://m.m.i24.cc/osmconvert.c | cc -x c - -lz -O3 -o osmconvert)
 		wget -O "$PBF_FILE_COMPLETE_PATH" "$OSM_source"
-       		./osmconvert "$PBF_FILE_COMPLETE_PATH" > $OSM_FILE_COMPLETE_PATH
+       	./osmconvert "$PBF_FILE_COMPLETE_PATH" > $OSM_FILE_COMPLETE_PATH
 	else # type == .osm
 		wget -O "$OSM_FILE_COMPLETE_PATH" "$OSM_source"
 	fi
