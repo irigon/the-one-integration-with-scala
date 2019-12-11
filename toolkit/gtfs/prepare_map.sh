@@ -1,98 +1,73 @@
 #!/bin/bash
-set -ex
+set -e
 
-me=$(basename "$0")
+# 1) if map exists, asks whether it should be overwritten
+# 2) if map must be created 
+#     2.1) obtain OSM data
+#     2.2) obtain GTFS data
+#     2.3) merge GTFS + OSM
+# 3) create configurations
+# 4) run
 
-## Helper functions
-usage(){
-	echo "Usage:"
-	echo "	" $me " scenario_name"
-}
 
-err_(){
-	echo "ERROR - $1"
-	exit 1
-}
+source map_definitions/helpers/common.sh
 
-get_osm(){
-	_OSM="$(find . -name "$SCENARIO.osm" -print -quit)"
-	[[ "$_OSM" != "" ]] && echo "$_OSM" && return
-	_OSM_PBF="$(find . -name "$SCENARIO.osm.pbf" -print -quit)"
-	[[ "$_OSM_PBF" != "" ]] && echo "$_OSM_PBF" && return
-	echo ""
-}
+d=$(date +%m/%d/%Y_+%H:%M+%S)
+section "Started at $d"
 
-### get filename
 if [ "$#" -lt 1 ] ; then  
 	usage 
 	err_ "Wrong number of parameters. Expected: scenario name"
 fi
 
-
-BASE_DIR="$(dirname $me)"
+BASE_DIR="$(dirname $(basename '$0'))"
 SCENARIO=$1
 MAPS_DIR=$BASE_DIR/maps
 DST_SCENARIO_DIR="$MAPS_DIR/$SCENARIO"
 DEFINITIONS=map_definitions
 
-
-## Import source description
 source $DEFINITIONS/$SCENARIO
+section "--- >>> Starting $SCENARIO"
 
-### Does the directory exists?
-if [ -d "$DST_SCENARIO_DIR" ]; then
-	read -p "$DST_SCENARIO_DIR exists. Delete it?[y/N]" -n 1 -r
-	if [[ "$REPLY" =~ ^[yY]$ ]]; then
-		rm -rf $DST_SCENARIO_DIR
-	else 
-		echo "Scenario exists. Exiting..."
-		exit 1
-	fi
+# ===========================================================
+# 1) verify whether a map already exists, update if necessary
+# ===========================================================
+section "1) verifying whether a map already exists."
+
+source map_definitions/helpers/overwrite_scenario.sh
+
+ready=$(map_is_ready "$SCENARIO")
+ignore=$(ignore_map "$SCENARIO")
+
+if [[ "$ready" == "true" ]]; then
+	echo "Scenario is ready, ignoring..."
+	exit
 fi
 
-OSM="$(get_osm)"
-GTFS=$(find . -name "$SCENARIO.zip" -print -quit)
+cleanup_if_necessary $DST_SCENARIO_DIR
 
-# create directories
-mkdir -p "$MAPS_DIR/$SCENARIO"
-
-# If the OSM file is not declared, try to download it
-# respecting its extension (.osm or .osm.pbf)
-if [[ "$OSM" == "" ]] ; then
-	_base=$(basename ${OSM_source})
-	_extension=".${_base#*osm.}"
-	[[ "$_extension" == "." ]] && _extension=""
-	wget -O "$MAPS_DIR/$SCENARIO/$SCENARIO.osm${_extension}" "$OSM_source"
-	OSM="$(get_osm)"
-	[[ ! -f "$OSM" ]] && err "OSM file could not be found."
-fi
-if [[ "$GTFS" == "" ]] ; then
-	extension="zip"
-	wget -O "$MAPS_DIR/$SCENARIO/$SCENARIO.${extension}" "$GTFS_source"
-	[ -f "$MAPS_DIR/$SCENARIO/$SCENARIO.${extension}" ] || err "GTFS file could not be found."
+EXISTS="$(map_exists $DST_SCENARIO_DIR)" 
+if [[ ! "$EXISTS" == "true" ]]; then
+	mkdir -p $DST_SCENARIO_DIR
+	source map_definitions/helpers/OSM_GTFS.sh
+	get_data "$DST_SCENARIO_DIR"
 fi
 
-# if osm is compressed, unpack
-[ ! -f "osmconvert" ] && $(curl http://m.m.i24.cc/osmconvert.c | cc -x c - -lz -O3 -o osmconvert)
-if [[ "$OSM" =~ .*pbf$  ]] ; then 
-       ./osmconvert "$OSM" > $DST_SCENARIO_DIR/$SCENARIO.osm
-else
-	cp -f $OSM $DST_SCENARIO_DIR || true
-fi
-cp -f $GTFS "$MAPS_DIR/$SCENARIO" || true
-exit
 
-# Merge with pfaedle
-pushd $DST_SCENARIO_DIR
-unzip $SCENARIO.zip
-pfaedle -D -x $SCENARIO.osm .
+section "3) Create configuration"
+python scenario.py $DST_SCENARIO_DIR/$SCENARIO.zip
 
-# pack back into gtfs
-OUT_FILE=$DST_SCENARIO_DIR/gtfs-out/$SCENARIO-out.zip 
-zip $OUT_FILE gtfs-out/*
+section "4) Compile"
+pushd ../../
+./compile.sh
 
-# generate config files
-popd
+section "5) Run"
+set +e
+result="Success"
+./one.sh -b 1 ${SCENARIO}_settings.txt
+[ "$?" -eq 0 ] || result="Failed"
 
-# run
-python scenario.py $OUT_FILE
+section "$result"
+
+[[ "$result" == "Success" ]] && echo $SCENARIO >> $SUCCESS_LIST
+
