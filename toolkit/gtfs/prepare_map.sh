@@ -44,6 +44,11 @@ if [[ "$ready" == "true" ]]; then
 	exit
 fi
 
+if [[ "$ignore" == "true" ]]; then
+	echo "Scenario is in ignore list, ignoring..."
+	exit
+fi
+
 cleanup_if_necessary $DST_SCENARIO_DIR
 
 EXISTS="$(map_exists $DST_SCENARIO_DIR)" 
@@ -55,6 +60,7 @@ fi
 
 
 section "3) Create configuration"
+source venv/bin/activate
 python scenario.py $DST_SCENARIO_DIR/$SCENARIO.zip
 
 section "4) Compile"
