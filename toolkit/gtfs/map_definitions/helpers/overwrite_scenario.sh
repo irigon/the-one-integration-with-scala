@@ -32,7 +32,7 @@ ignore_map(){
 	[ "$#" -lt 1 ] && err_ "Wrong number of parameters. Expected: ${FUNCNAME[0]} scenario_name"
 
 	SCENARIO_NAME=$1
-	SUCCESS_LIST=map_definitions/helpers/ignore_list
+	IGNORE_LIST=map_definitions/helpers/ignore_list
 
 	search_in_list $SCENARIO_NAME $IGNORE_LIST
 }
