@@ -56,7 +56,7 @@ merge(){
 	pushd gtfs-out
 	zip $SCENARIO.zip *
 	popd
-	mv gtfs-out/$SCENARIO.zip .
-	rm -rf gtfs-out
+	#mv gtfs-out/$SCENARIO.zip .
+	#rm -rf gtfs-out
 	popd
 }

@@ -61,7 +61,7 @@ fi
 
 section "3) Create configuration"
 source venv/bin/activate
-python scenario.py $DST_SCENARIO_DIR/$SCENARIO.zip
+python scenario.py $DST_SCENARIO_DIR/gtfs-out/$SCENARIO.zip
 
 section "4) Compile"
 pushd ../../
