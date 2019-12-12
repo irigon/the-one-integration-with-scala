@@ -73,6 +73,8 @@ result="Success"
 ./one.sh -b 1 ${SCENARIO}_settings.txt
 [ "$?" -eq 0 ] || result="Failed"
 
+popd
+
 section "$result"
 
 [[ "$result" == "Success" ]] && echo $SCENARIO >> "$(success_list)"

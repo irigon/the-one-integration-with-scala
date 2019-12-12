@@ -1,0 +1,4 @@
+map_INFOS="GTFS transitland, OSM overpass"
+OSM_source="http://download.geofabrik.de/europe/switzerland-latest.osm.pbf"
+GTFS_source="https://opentransportdata.swiss/en/dataset/timetable-2017-gtfs/permalink"
+

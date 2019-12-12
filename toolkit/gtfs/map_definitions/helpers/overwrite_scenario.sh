@@ -3,7 +3,6 @@ set -e
 
 success_list(){
 	echo map_definitions/helpers/success_list
-
 }
 
 search_in_list(){
