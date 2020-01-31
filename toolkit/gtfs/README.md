@@ -128,8 +128,32 @@ To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}`
 urlencoded or download it via the overpass-turbo website ("Export" -> "raw data directly from Overpass API").
 
 ## Example scenarios
+The preparation of a scenario is a manual work.
+Below we have a script to start with a map as Helsinki, Freiburg or Prague.
+The process about how to do manually you find later on in "Helsinki manually".
 
-### Helsinki
+### Scenario creation
+
+Example: helsinki1, prague1, freiburg1
+
+Download and merge maps:
+
+```bash
+$ GTFS_DIR=$THE_ONE_DIR/toolkit/gtfs
+$ cd $GTFS_DIR
+$ ./prepare_map.sh helsinki1 |& tee logs/helsinki1
+```
+
+Run:
+
+```bash
+$ cd $THE_ONE_DIR
+$ ./compile.sh 
+$ ./one.sh helsinki1_settings.txt
+```
+
+
+### Helsinki manually
 
 Download the feed (e.g., from [Transitfeeds](https://transitfeeds.com))
 ```bash
@@ -170,8 +194,6 @@ $ cd $THE_ONE_DIR
 $ ./compile.sh 
 $ ./one.sh hsl_settings.txt
 ```
-
-### Cologne 
 
 ### Freiburg
 
