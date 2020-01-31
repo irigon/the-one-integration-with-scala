@@ -178,14 +178,14 @@ $ wget -O maps/helsinki.osm https://overpass-api.de/api/interpreter?data=%5Bout%
 Merge GTFS and OSM data using Pfaedle
 ```bash
 $ unzip maps/helsinki.zip -d maps/helsinki
-$ pfaedle -x hsl.osm -D maps/helsinki
+$ pfaedle -x maps/helsinki.osm -D maps/helsinki
 ```
 
 Create configuration files:
 ```bash
-$ cd maps/helsinki/gtfs-out && zip hsl.zip * && cd -
+$ cd gtfs-out && zip hsl.zip * && cd -
 $ source venv/bin/activate
-$ python scenario.py maps/helsinki/gtfs-out/hsl.zip
+$ python scenario.py gtfs-out/hsl.zip
 ```
 
 Run

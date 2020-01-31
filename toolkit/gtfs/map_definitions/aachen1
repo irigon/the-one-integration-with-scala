@@ -1,4 +1,0 @@
-map_INFOS="GTFS transitland, OSM geofabrik"
-OSM_source="http://download.geofabrik.de/europe/germany/nordrhein-westfalen/koeln-regbez-latest.osm.pbf"
-GTFS_source="https://transitland-gtfs.s3.amazonaws.com/datastore-uploads/feed_version/084d0e2ad3b3f219b37423d4e267ee52ecdc15be.zip"
-
