@@ -1,0 +1,4 @@
+map_INFOS="GTFS de vrs.de (https://www.vrs.de/fahren/fahrplanauskunft/opendata-/-openservice) , OSM geofabrik"
+OSM_source="http://download.geofabrik.de/europe/germany/nordrhein-westfalen/koeln-regbez-latest.osm.pbf"
+GTFS_source="http://download.vrsinfo.de/gtfs/google_transit.zip"
+

@@ -1,0 +1,4 @@
+map_INFOS=""
+map_IGNORE=false
+OSM_source="https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf"
+GTFS_source="https://transitfeeds.com/p/helsinki-regional-transport/735/latest/download"

@@ -1,0 +1,4 @@
+map_INFOS="GTFS de transitfeeds.com, Version 02.05.17"
+OSM_source="http://download.geofabrik.de/europe/germany/nordrhein-westfalen/koeln-regbez-latest.osm.pbf"
+GTFS_source="https://transitfeeds.com/p/verkehrsverbund-rhein-sieg/835/20170502/download"
+

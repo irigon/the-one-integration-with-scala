@@ -1,0 +1,4 @@
+map_INFOS="GTFS transitland, OSM overpass"
+OSM_source=""
+GTFS_source=""
+

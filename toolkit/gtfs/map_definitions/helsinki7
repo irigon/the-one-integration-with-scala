@@ -1,0 +1,5 @@
+map_INFOS="OSM grande, GTFS from transitland"
+map_IGNORE=false
+OSM_source="https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf"
+GTFS_source="http://dev.hsl.fi/gtfs/hsl.zip"
+
