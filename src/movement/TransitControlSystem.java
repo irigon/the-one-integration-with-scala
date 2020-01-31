@@ -37,7 +37,7 @@ class TransitControlSystem {
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
-	TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, int okMapType) {
+	TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
 		stops = readStops(stopsFile, map);
 		TransitStop start = stops.get(0);
 		TransitStop end = stops.get(stops.size() - 1);
@@ -199,7 +199,7 @@ class TransitControlSystem {
 			if (candidate == null) {
 				candidate = n;
 			} else {
-				if (Integer.bitCount(n.getType()) < Integer.bitCount(candidate.getType())) {
+				if (Long.bitCount(n.getType()) < Long.bitCount(candidate.getType())) {
 					candidate = n;
 				}
 			}
@@ -210,14 +210,14 @@ class TransitControlSystem {
 		return candidate;
 	}
 	
-	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, int okMapType) {
+	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, long okMapType) {
 		SimMap mapFromDisk;
 
 		List<MapNode> nodeList = new ArrayList<MapNode>();
 		
 		WKTMapReader r = new WKTMapReader(true);
 		try {
-			r.addPaths(new File(nodesFile), okMapType);
+			r.addPaths(new File(nodesFile), (int)okMapType);
 		} catch (IOException e) {
 			throw new SimError(e.toString(),e);
 		}
@@ -248,6 +248,7 @@ class TransitControlSystem {
 		while(currNode.compareTo(lastNode) != 0) {
 			// each node has at most 2 neighbors
 			if (currNode.getNeighbors().size() > 2) {
+				System.out.println(currNode.toString() + ": neighbors: " + currNode.getNeighbors().toString());
 				System.out.println("A node should have, at this point, at most 2 neighbors.");
 				System.exit(1);				
 			}
@@ -295,7 +296,7 @@ class TransitControlSystem {
 	 * right order direct from file
 	 */
 	
-	private void buildPaths(List<TransitStop> stops, String nodesFile, SimMap map, int okMapType) {
+	private void buildPaths(List<TransitStop> stops, String nodesFile, SimMap map, long okMapType) {
 		TransitStop currentStop = stops.get(0);
 		TransitStop nextStop = currentStop.getNext();
 		MapNode currentNode = currentStop.node;

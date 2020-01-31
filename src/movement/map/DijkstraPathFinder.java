@@ -32,14 +32,14 @@ public class DijkstraPathFinder {
 	/** Map of previous nodes on the shortest path(s) */
 	private Map<MapNode, MapNode> prevNodes;
 
-	private int [] okMapNodes;
+	private long[] okMapNodes;
 
 	/**
 	 * Constructor.
 	 * @param okMapNodes The map node types that are OK for paths or null if
 	 * all nodes are OK
 	 */
-	public DijkstraPathFinder(int [] okMapNodes) {
+	public DijkstraPathFinder(long[] okMapNodes) {
 		super();
 		this.okMapNodes = okMapNodes;
 	}

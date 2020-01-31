@@ -40,8 +40,8 @@ public abstract class SnapshotReport extends Report implements UpdateListener {
 
 		if (settings.contains(REPORTED_NODES)) {
 			this.reportedNodes = new HashSet<Integer>();
-			for (Integer nodeId : settings.getCsvInts(REPORTED_NODES)) {
-				this.reportedNodes.add(nodeId);
+			for (long nodeId : settings.getCsvInts(REPORTED_NODES)) {
+				this.reportedNodes.add((int) nodeId);
 			}
 		}
 		else {
