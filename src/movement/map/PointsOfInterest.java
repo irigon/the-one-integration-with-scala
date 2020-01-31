@@ -41,7 +41,7 @@ public class PointsOfInterest {
 	/** map whose points all POIs are */
 	private SimMap map;
 	/** map node types that are OK to visit */
-	private int [] okMapNodeTypes;
+	private long[] okMapNodeTypes;
 	/** list of all this POI instance's POI lists */
 	private ArrayList<List<MapNode>> poiLists;
 	/** list of probabilites of choosing a POI group */
@@ -57,7 +57,7 @@ public class PointsOfInterest {
 	 * @param settings The Settings object where settings are read from
 	 * @param rng The random number generator to use
 	 */
-	public PointsOfInterest(SimMap parentMap, int [] okMapNodeTypes,
+	public PointsOfInterest(SimMap parentMap, long[] okMapNodeTypes,
 			Settings settings, Random rng) {
 		this.poiLists = new ArrayList<List<MapNode>>();
 		this.poiProbs = new LinkedList<Tuple<Double, Integer>>();

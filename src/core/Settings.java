@@ -688,6 +688,16 @@ public class Settings {
 	}
 
 	/**
+	 * Returns an array of CSV setting long values
+	 * @param name Name of the setting
+	 * @return Array of values that were comma-separated
+	 * @see #getCsvSetting(String, long)
+	 */
+	public long[] getCsvLongs(String name) {
+		return convertToLongs(getCsvDoubles(name), name);
+	}
+
+	/**
 	 * Returns comma-separated ranges (e.g., "3-5, 17-20, 15")
 	 * @param name Name of the setting
 	 * @return Array of ranges that were comma-separated in the setting
@@ -759,6 +769,26 @@ public class Settings {
 	}
 
 	/**
+	 * Converts a double value that is supposedly equal to an long value
+	 * to an long value.
+	 * @param doubleValue The double value to convert
+	 * @param name Name of the setting where this value is from (for
+	 * SettingsError)
+	 * @return The long value
+	 * @throws SettingsError if the double value was not equal to any long
+	 * value
+	 */
+	private long convertToLong(double doubleValue, String name) {
+		long number = (long)doubleValue;
+
+		if (number != doubleValue) {
+			throw new SettingsError("Expected long value for setting '" +
+					name + "' " + " got '" + doubleValue + "'");
+		}
+		return number;
+	}
+
+	/**
 	 * Converts an array of double values to int values using
 	 * {@link #convertToInt(double, String)}.
 	 * @param doubleValues The double valued array
@@ -771,6 +801,23 @@ public class Settings {
 		int[] values = new int[doubleValues.length];
 		for (int i=0; i<values.length; i++) {
 			values[i] = convertToInt(doubleValues[i], name);
+		}
+		return values;
+	}
+
+	/**
+	 * Converts an array of double values to long values using
+	 * {@link #convertToLongs(double[], String)}.
+	 * @param doubleValues The double valued array
+	 * @param name Name of the setting where this value is from (for
+	 * SettingsError)
+	 * @return Array of long values
+	 * @see #convertToLong(double, String)
+	 */
+	private long[] convertToLongs(double [] doubleValues, String name) {
+		long[] values = new long[doubleValues.length];
+		for (int i=0; i<values.length; i++) {
+			values[i] = convertToLong(doubleValues[i], name);
 		}
 		return values;
 	}
