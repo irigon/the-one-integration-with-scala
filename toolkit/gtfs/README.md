@@ -8,7 +8,7 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
 ## Get started
 * First create a new virtualenv:
   * `cd $THE_ONE_DIR/toolkit/gtfs`
-  * `python -m venv venv`
+  * `python3 -m venv venv`
   * `source venv/bin/activate`
 * Then install dependencies:
   * `pip install -r requirements.txt`
@@ -136,24 +136,24 @@ Download the feed (e.g., from [Transitfeeds](https://transitfeeds.com))
 $ GTFS_DIR=$THE_ONE_DIR/toolkit/gtfs
 $ cd $GTFS_DIR
 $ mkdir maps
-$ wget -O helsinki.zip https://transitfeeds.com/p/helsinki-regional-transport/735/latest/download
+$ wget -O maps/helsinki.zip https://transitfeeds.com/p/helsinki-regional-transport/735/latest/download
 ```
 
-Download the OpenStreetMap from Helsinki (e.g., [hsl.fi/en/opendata](https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf))
+Download the OpenStreetMap from Helsinki (e.g., [hsl.fi/en/opendata](https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf)) - Requires zlib1g-dev
 ```bash
-$ wget -O helsinki.osm.pbf https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf
+$ wget -O maps/helsinki.osm.pbf https://karttapalvelu.storage.hsldev.com/hsl.osm/hsl.osm.pbf
 $ curl http://m.m.i24.cc/osmconvert.c | cc -x c - -lz -O3 -o osmconvert
-$ ./osmconvert hsl.osm.pbf > hsl.osm
+$ ./osmconvert maps/helsinki.osm.pbf > maps/helsinki.osm
 ```
 
 Or, alternatively from overpass-turbo:
 ```bash
-$ wget -O hsl.osm https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29%2D%3E%2EsearchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area%2EsearchArea%29%3B%29%3Bout%3B%3E%3Bout%20qt%3B%0A
+$ wget -O maps/helsinki.osm https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29%2D%3E%2EsearchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area%2EsearchArea%29%3B%29%3Bout%3B%3E%3Bout%20qt%3B%0A
 ```
 
 Merge GTFS and OSM data using Pfaedle
 ```bash
-$ unzip helsinki.zip -d maps/helsinki
+$ unzip maps/helsinki.zip -d maps/helsinki
 $ pfaedle -x hsl.osm -D maps/helsinki
 ```
 
