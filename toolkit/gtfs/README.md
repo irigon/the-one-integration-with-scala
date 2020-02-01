@@ -195,22 +195,8 @@ $ ./compile.sh
 $ ./one.sh hsl_settings.txt
 ```
 
-### Freiburg
-
-### Berlin
-
 ## Known issues to be fixed
 
-To quickly test out this toolkit you can use the GTFS feed of Helsinki and the following steps for a tram scenario:
-```bash
-wget -O hsl.zip https://objectstorage.fi-1.cloud.global.fujitsu.com/v1/AUTH_75240ea7e6fd4ca29b6b4b4d3d227fbe/gtfs.hsl/hsl_20130201T115528Z.zip
-wget -O hsl.osm https://overpass-api.de/api/interpreter\?data\=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29-%3E.searchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area.searchArea%29%3B%29%3Bout%20body%3B%3E%3Bout%20body%20qt%3B
-unzip hsl.zip -d hsl
-pfaedle -x hsl.osm -D --inplace hsl
-zip -rj hsl_matched.zip hsl/*
-python scenario.py -o helsinki hsl_matched.zip
-cd ../..
-./one.sh helsinki_settings.txt
 ```
 If you get the error `Couldn't find class 'movement.TransitMapMovement'` then you probably copied over the classes of this repo without recompiling the-ONE. Run the install script and then try again.
 
