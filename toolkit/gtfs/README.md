@@ -198,7 +198,9 @@ $ ./one.sh hsl_settings.txt
 ## Known issues to be fixed
 
 ```
-If you get the error `Couldn't find class 'movement.TransitMapMovement'` then you probably copied over the classes of this repo without recompiling the-ONE. Run the install script and then try again.
+Couldn't find class 'movement.TransitMapMovement' Error: you probably copied over the classes of this repo without recompiling the-ONE. Run the install script and then try again.
+
+error: option -extdirs not allowed with target 11: Edit $THE_ONE_HOME/compile.sh changing `-extdirs` to `-cp`
 ``` 
 
 ![helsinki trams in the-ONE!](https://raw.githubusercontent.com/fcornelius/the-one/master/toolkit/gtfs/hls-screenshot.png)
