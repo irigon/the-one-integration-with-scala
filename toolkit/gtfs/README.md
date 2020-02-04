@@ -12,36 +12,54 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
   * `source venv/bin/activate`
 * Then install dependencies:
   * `pip install -r requirements.txt`
+* Install [ad-freiburg/pfaedle](http://github.com/ad-freiburg/pfaedle)
 
-## Create a new scenario
+### Quickstart
+
+Example: helsinki1, prague1, freiburg1
+
+Download and merge maps:
+
+```bash
+$ GTFS_DIR=$THE_ONE_DIR/toolkit/gtfs
+$ cd $GTFS_DIR
+$ ./prepare_map.sh helsinki1 |& tee logs/helsinki1
+```
+
+Run:
+
+```bash
+$ cd $THE_ONE_DIR
+$ ./compile.sh 
+$ ./one.sh helsinki1_settings.txt
+```
+
+## Selecting new scenarios
 * Find a GTFS feed for the city you want to import into the ONE.  
   Good resources for public feeds are [transit.land/feed-registry](http://transit.land/feed-registry) or [transitfeeds.com](http://transitfeeds.com)
 * Check if your selected feed includes shape data  
   (`shapes.txt` exists inside the feed and both `shapes.txt` and `stop_times.txt` need non-empty `shape_dist_traveled` columns)  
   If shape data does not exist or is incomplete it can be retreived from OpenStreetMap (See [Download map data](#Download-map-data)).  
   
-  To process osm data there are currently two options:
-    * Create gtfs shapes from osm data by map-matching (see [Shape Generation](#Shape-Generation))
-    * Supply osm data directly to `scenario.py` to create route paths. This should be used as a fallback method when the shape enrichment was not successful as it is more error prone.
-* Generate ONE settings configuration and all needed files with 
+  To process osm data, create gtfs shapes from osm data by map-matching (see [Shape Generation](#Shape-Generation))
+* With a complete GTFS file at hand (myfeed.zip) one can generate the settings and data files for The-ONE:
     ```
     python scenario.py myfeed.zip
     ```
-    or for direct osm processing:  
+    alternatively, it is possible to include shapes data and create scenario in one step:  
     ```
     python scenario.py --osm map.osm myfeed.zip
     ```
-    This will create the needed files in `$ONE/data/myfeed` and a ONE settings file at `$ONE/myfeed_settings.txt` 
-    (with `$ONE` being the path of your ONE installation). 
-* Switch into the ONE directory and run the scenario with
+    This creates the needed data files in `$THE_ONE_DIR/data/myfeed` and settings at `$THE_ONE_DIR/myfeed_settings.txt` 
+* Switch into the $THE_ONE_DIR directory and test:
     ```
     ./one.sh myfeed_settings.txt
     ```
 
-NOTE: the settings config contains only settings needed for the generated files. To start a valid ONE scenario a fallback `default_settings.txt` can (and must) be used to define general settings like router or time configuration.
+NOTE: the settings config contains only settings needed for the generated files. To start a valid scenario a fallback `default_settings.txt` can (and must) be used to define general settings like router or time configuration.
 
 
-### Options
+### scenario.py Options
 ```
 positional arguments:
   gtfs_file             the GTFS feed to parse (.zip file).
@@ -79,6 +97,7 @@ optional arguments:
 ```
 
 ## Shape Generation
+
 There exist multiple projects with the aim to import OSM geodata into GTFS shapes.
 [ad-freiburg/pfaedle](http://github.com/ad-freiburg/pfaedle) seems to be the most reliable and best performing option that was evaluated here.
 The program reads in a gtfs and osm file and attemps to create a shape for each trip of the feed via map-matching. 
@@ -127,30 +146,9 @@ You can paste the query on [overpass-turbo](https://overpass-turbo.eu/) to get a
 To retrieve the xml, call `https://overpass-api.de/api/interpreter?data={query}` with the query 
 urlencoded or download it via the overpass-turbo website ("Export" -> "raw data directly from Overpass API").
 
-## Example scenarios
+## Creating a new scenario manually
 The preparation of a scenario is a manual work.
-Below we have a script to start with a map as Helsinki, Freiburg or Prague.
-The process about how to do manually you find later on in "Helsinki manually".
-
-### Scenario creation
-
-Example: helsinki1, prague1, freiburg1
-
-Download and merge maps:
-
-```bash
-$ GTFS_DIR=$THE_ONE_DIR/toolkit/gtfs
-$ cd $GTFS_DIR
-$ ./prepare_map.sh helsinki1 |& tee logs/helsinki1
-```
-
-Run:
-
-```bash
-$ cd $THE_ONE_DIR
-$ ./compile.sh 
-$ ./one.sh helsinki1_settings.txt
-```
+The process about how to manually create the "Helsinki" scenario.
 
 
 ### Helsinki manually
