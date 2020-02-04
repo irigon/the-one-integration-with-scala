@@ -6,11 +6,11 @@ These tools allow you to generate all files neccesary for a TransitMapMovement-b
 * Python 3.5+ and pip installed on your machine
   
 ## Get started
-* First create a new virtualenv:
+* Create a new virtualenv:
   * `cd $THE_ONE_DIR/toolkit/gtfs`
   * `python3 -m venv venv`
   * `source venv/bin/activate`
-* Then install dependencies:
+* Install dependencies:
   * `pip install -r requirements.txt`
 * Install [ad-freiburg/pfaedle](http://github.com/ad-freiburg/pfaedle)
 
