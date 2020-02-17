@@ -210,63 +210,43 @@ class TransitControlSystem {
 		return candidate;
 	}
 	
+	/**
+	 * Reads a trip from node files. Return an ordered list of nodes.
+	 */
 	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, long okMapType) {
 		SimMap mapFromDisk;
 
 		List<MapNode> nodeList = new ArrayList<MapNode>();
+		List<Coord> coordList = new ArrayList<Coord>();
 		
 		WKTMapReader r = new WKTMapReader(true);
 		try {
-			r.addPaths(new File(nodesFile), (int)okMapType);
+			coordList = r.loadPathAsList(new File(nodesFile), (int)okMapType);
 		} catch (IOException e) {
 			throw new SimError(e.toString(),e);
 		}
-		mapFromDisk = r.getMap();
-		MapNode currNode = null;
+		
+		for (Coord c: coordList) {
+			updateCoordinate(map, c);
+			MapNode n = map.getNodeByCoord(c);
+			if (n != null) {
+				nodeList.add(n);
+			} else {
+				throw new SettingsError("Stop " + c + " is not a valid Map node");
+			}			
+		}
+		
 		MapNode startNode = stops.get(0).node;
 
-		for (MapNode mn : mapFromDisk.getNodes()) {
-			updateCoordinate(map, mn.getLocation());
-			//System.out.println("mn : " + mn.getLocation() + ", stop0 : " + startNode.getLocation() );
-			if (mn.getLocation().equals(startNode.getLocation())) {
-				currNode = mn;
-			}
-		}
-
-		if (currNode == null) {
+		if (!startNode.getLocation().equals(coordList.get(0))) {
 			System.out.println("Error - inicial node not found in nodes file.");
 			System.exit(1);
 		}
 		
-		// Walk the path up to the end destination, creating a list of nodes
-		// Return the list.
-		nodeList.add(map.getNodeByCoord(currNode.getLocation()));
-				
 		MapNode lastNode = stops.get(stops.size()-1).node;
-		MapNode lastWayNode = null;
-		
-		while(currNode.compareTo(lastNode) != 0) {
-			// each node has at most 2 neighbors
-			if (currNode.getNeighbors().size() > 2) {
-				System.out.println(currNode.toString() + ": neighbors: " + currNode.getNeighbors().toString());
-				System.out.println("A node should have, at this point, at most 2 neighbors.");
-				System.exit(1);				
-			}
-			// the neighbor is different than last
-			for (MapNode neighbor: currNode.getNeighbors()) {
-				if (lastWayNode == null || neighbor.compareTo(lastWayNode) != 0) {
-					Coord c = neighbor.getLocation();
-					MapNode n = map.getNodeByCoord(c);
-					if (n != null) {
-						nodeList.add(n);
-					} else {
-						throw new SettingsError("Stop " + c + " is not a valid Map node");
-					}
-					lastWayNode = currNode;
-					currNode = neighbor;
-					break;
-				}
-			}
+		if (!lastNode.getLocation().equals(coordList.get(coordList.size() - 1))) {
+			System.out.println("Error - final node not found in nodes file.");
+			System.exit(1);
 		}
 		
 		return nodeList;

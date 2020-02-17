@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
@@ -112,6 +113,24 @@ public class WKTMapReader extends WKTReader {
 				readNestedContents();
 			}
 		}
+	}
+
+	// Attention --> just taking into account LINESTRING type
+	public List<Coord> loadPathAsList(File file, int nodeType) throws IOException {
+		Reader input = new FileReader(file);
+		List<Coord> c = new ArrayList<Coord>();
+		this.nodeType = nodeType;
+		String type;
+		String contents;
+
+		init(input);
+		while((type = nextType()) != null) {
+			if (type.equals(LINESTRING)) {
+				contents = readNestedContents();
+				return(parseLineString(contents));
+			}
+		}
+		return c;
 	}
 
 	/**
