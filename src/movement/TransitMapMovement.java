@@ -76,6 +76,8 @@ public class TransitMapMovement extends MapBasedMovement implements
 	public double nextPathAvailable() {
 		if (currentTrip.atFirstStop()) {
 			waitTime = 0;
+			// Turn of the communication system of mobile devices at initialization
+			getHost().setCommunicationSystemON(false);
 			return currentTrip.getStartTime();
 		}
 		if (currentTrip.atLastStop()) {
@@ -84,6 +86,9 @@ public class TransitMapMovement extends MapBasedMovement implements
 					currentTrip.getCurrentStop()
 			);
 			waitTime = 0;
+			if (currentTrip == null || currentTrip.getStartTime() - SimClock.getTime() > 1200) {
+				getHost().setCommunicationSystemON(false);
+			}
 			// When no more trips from this stop exist, halt here.
 			if (currentTrip == null)
 				return Double.MAX_VALUE;
