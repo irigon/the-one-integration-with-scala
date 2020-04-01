@@ -235,6 +235,10 @@ abstract public class NetworkInterface implements ModuleCommunicationListener {
 			return true; /* no handler: always active */
 		}
 
+		if (! host.isCommunicationSystemON()) {
+			return false;
+		}
+
 		active = ah.isActive(this.activenessJitterValue);
 
 		if (active && host.getComBus().getDouble(EnergyModel.ENERGY_VALUE_ID,

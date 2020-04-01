@@ -40,7 +40,7 @@ class TransitControlSystem {
 	TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
 		stops = readStops(stopsFile, map);
 		TransitStop start = stops.get(0);
-		TransitStop end = stops.get(stops.size() - 1);
+		TransitStop end = stops.get(stops.size() - 1); // TODO: reference trip may have different end
 
 		if (start.equals(end)) {
 		    routeType = CIRCULAR;
@@ -48,6 +48,7 @@ class TransitControlSystem {
 		    routeType = PINGPONG;
         }
 
+		// construct the reference trip one way
         buildPaths(stops, nodesFile, map, okMapType);
         schedule = readSchedule(scheduleFile);
         r = new Random();
@@ -64,6 +65,12 @@ class TransitControlSystem {
 
 	}
 
+	/**
+	 * Read the stop files to have an ordered list of stations
+	 * @param fileName
+	 * @param map
+	 * @return An ordered list of TransitStops
+	 */
 	private List<TransitStop> readStops(String fileName, SimMap map) {
 		List<TransitStop> stops = new ArrayList<>();
 
@@ -181,38 +188,14 @@ class TransitControlSystem {
 		return schedule;
 	}
 
-	private MapNode next_stop_is_a_neighbor(List<MapNode> neighbors, MapNode nextStop) {
-		for (MapNode n : neighbors) {
-			if (n.equals(nextStop)) {
-				return n;
-			}
-		}
-		return null;
-	}
-
-	private MapNode get_next_neighbor(List<MapNode> neighbors, MapNode lastWayP, int mapType) {
-		MapNode candidate = null;
-		for (MapNode n : neighbors) {
-			if (!n.isType(mapType) || n.equals(lastWayP)) {
-				continue;
-			}
-			if (candidate == null) {
-				candidate = n;
-			} else {
-				if (Long.bitCount(n.getType()) < Long.bitCount(candidate.getType())) {
-					candidate = n;
-				}
-			}
-		}
-		if (candidate == null) {
-		    throw new IllegalArgumentException("candidate should not be null");
-		}
-		return candidate;
-	}
 	
 	/**
-	 * Reads a trip from node files. Return an ordered list of nodes.
+	 * Read a trip from node files. Return it as an ordered list of nodes
+	 * @param fileName
+	 * @param map
+	 * @return An ordered list of TransitStops
 	 */
+
 	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, long okMapType) {
 		SimMap mapFromDisk;
 
@@ -283,7 +266,7 @@ class TransitControlSystem {
 		MapNode nextStopNode = nextStop.node;
 		List<MapNode> orderedPath = readPath(nodesFile, stops, map, okMapType);
 
-		MapNode endNode = stops.get(stops.size() - 1).node;
+		MapNode endNode = stops.get(stops.size() - 1).node; // TODO: when using reference trip, this might not be right. Fix it
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
         TransitWay p = new TransitWay();
@@ -344,6 +327,7 @@ class TransitControlSystem {
 	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop) {
 		// Inexistent schedule (possibly bug?)
 		if (schedule == null ) {
+			System.out.println("Inexistent schedule - BUG");
 			return defaultTripForStop(time, currentStop);
 		}
 		// schedule empty or no more schedules
@@ -364,7 +348,7 @@ class TransitControlSystem {
 		}
 		catch(NullPointerException e) {
 			    // do something other
-			System.out.println("Oops");
+			System.out.println("Oops! Error getting next trip");
 		}		
 		
 			return schedule.remove(key);
