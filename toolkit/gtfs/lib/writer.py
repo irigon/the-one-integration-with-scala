@@ -9,6 +9,7 @@ WKT_CRD_SEP = ' '
 WKT_PNT_SEP = ', '
 CSV_DELIMITER = ','
 CSV_QUOTECHAR = '"'
+# what the hack is a fallback duration?
 FALLBACK_DURATION = 3
 
 def write_wkt_linestring(coords: List[Tuple[float, float]], file: str, append=False) -> None:
@@ -53,9 +54,13 @@ def write_csv_stops(coords: List[Tuple[float, float]], durations: List[int], fil
             durations = len(coords) * [FALLBACK_DURATION]
         for i, duration in enumerate(durations):
             c = coords[i]
+            # write duration in seconds
+            duration_s = 30
+            if duration > 0:
+                duration_s = duration * 60
             w.writerow([
                 '{} {}'.format(c[0], c[1]),
-                duration
+                duration_s
             ])
 
 def write_csv_schedule(schedule: List, file: str):
