@@ -87,7 +87,8 @@ public class TransitMapMovement extends MapBasedMovement implements
 		if (currentTrip.atLastStop()) {
 			currentTrip = system.getTripForStop(
 					(int) SimClock.getTime(),
-					currentTrip.getCurrentStop()
+					currentTrip.getCurrentStop(),
+					this.control_system_id
 			);
 //			currentTrip = system.getTripForStop(control_system_id);
 			waitTime = 0;
@@ -108,7 +109,8 @@ public class TransitMapMovement extends MapBasedMovement implements
 	 */
 	@Override
 	public Coord getInitialLocation() {
-		currentTrip = system.getInitialTrip((int) SimClock.getTime());
+		//currentTrip = system.getInitialTrip((int) SimClock.getTime());
+		currentTrip = system.getInitialTrip(control_system_id);
 		return currentTrip.startLocation().clone();
 	}
 

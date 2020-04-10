@@ -153,67 +153,112 @@ public class TransitReader {
 
 	
 	/**
-	 * Return an ordered list of transitTrips ordered by departure time.
-	 * @return
+	 * Read the schedules from file and transform in a treeMap.
+	 * @return TreeMap with the departure time as key and an array of 
+	 * transit_trips as value
 	 */
-	public TreeMap<Integer, TransitTrip> readSchedule() {
-		TreeMap<Integer, TransitTrip> schedule = new TreeMap<>();
+	public TreeMap<Integer, ArrayList<TransitTrip>> readSchedule() {
+		TreeMap<Integer, ArrayList<TransitTrip>> schedule = new TreeMap<>();
+		
+		TransitTrip tr_curr_line;
+		int depart_time;
+
+		List<String> line_list = new ArrayList<String>();
+		try (Stream<String> lines = Files.lines(Paths.get(this.scheduleFilename))) {
+			line_list = lines.collect(Collectors.toList());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		for (String line: line_list) {
+			tr_curr_line = getTripFromLine(line);
+			depart_time = tr_curr_line.getStartTime();
+
+			// if key not in map, add list
+			if (schedule.get(depart_time) == null) {
+				schedule.put(depart_time, new ArrayList<TransitTrip>());
+			}
+			
+			schedule.get(depart_time).add(tr_curr_line);
+		}
+		
+		if (schedule.isEmpty()) {
+			schedule = null;
+		}
+		
+//		FileReader fr;
+//		try {
+//			fr = new FileReader(this.scheduleFilename);
+//		} catch (FileNotFoundException e) {
+//			throw new SettingsError("Cannot find schedule file.");
+//		}
+//		try (BufferedReader br = new BufferedReader(fr)) {
+//			String line;
+//			
+//			while ((line = br.readLine()) != null) {
+//				
+//
+//				tr_curr_line = getTripFromLine(line);
+//				depart_time = tr_curr_line.getStartTime();
+//
+//				// if key not in map, add list
+//				if (schedule.get(depart_time) == null) {
+//					schedule.put(depart_time, new ArrayList<TransitTrip>());
+//				}
+//				
+//				schedule.get(depart_time).add(tr_curr_line);
+//			}
+//
+//			if (schedule.isEmpty()) {
+//				schedule = null;
+//			}
+//
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} catch (NumberFormatException e) {
+//			throw new SettingsError("Malformed stops file supplied, " +
+//					"first column must be two double values, second column int value");
+//		} catch (IndexOutOfBoundsException e) {
+//			throw new SettingsError("Stop index for trip is out of bounds");
+//		}
+
+		return schedule;
+	}
+	
+	/**
+	 * Transform the line input into a TransitTrip 
+	 * @param line read from file
+	 * @return TransitTrip
+	 */
+	TransitTrip getTripFromLine(String line) {
+		TransitTrip result_tt;
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
+
 		try {
 			timeStart = sdf.parse("00:00:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		FileReader fr;
+		if (columns.length != 3) {
+			throw new SettingsError("Malformed schedule file supplied, needs 3 columns.");
+		}
 
+		Date time = null;
 		try {
-			fr = new FileReader(this.scheduleFilename);
-		} catch (FileNotFoundException e) {
-			throw new SettingsError("Cannot find schedule file.");
-		}
-		try (BufferedReader br = new BufferedReader(fr)) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] columns = line.split(COMMA_DELIMITER);
-				if (columns.length != 3) {
-					throw new SettingsError("Malformed schedule file supplied, needs 3 columns.");
-				}
-
-				Date time = sdf.parse(columns[0]);
-				long seconds = (time.getTime() - timeStart.getTime()) / 1000;
-				int startIndex = Integer.parseInt(columns[1]);
-				int endIndex = Integer.parseInt(columns[2]);
-				if (schedule.lastEntry() != null) {
-					// ensures that the schedule is ordered
-					assert (schedule.lastEntry().getKey() <= seconds);
-				}
-				schedule.put((int) seconds, new TransitTrip(
-						(int) seconds,
-						this.stops.get(startIndex),
-						this.stops.get(endIndex),
-						startIndex < endIndex ?
-								TripDirection.FORWARD :
-								TripDirection.BACKWARD
-				));
-			}
-
-			if (schedule.isEmpty()) {
-				schedule = null;
-			}
-
-		} catch (IOException e) {
+			time = sdf.parse(columns[0]);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (NumberFormatException e) {
-			throw new SettingsError("Malformed stops file supplied, " +
-					"first column must be two double values, second column int value");
-		} catch (java.text.ParseException e) {
-			throw new SettingsError("Can not parse time");
-		} catch (IndexOutOfBoundsException e) {
-			throw new SettingsError("Stop index for trip is out of bounds");
 		}
-
-		return schedule;
+		int seconds = (int)(time.getTime() - timeStart.getTime()) / 1000;
+		int startIndex = Integer.parseInt(columns[1]);
+		int endIndex = Integer.parseInt(columns[2]);
+		TripDirection td = startIndex < endIndex ? TripDirection.FORWARD : TripDirection.BACKWARD;
+		
+		return (new TransitTrip(seconds, this.stops.get(startIndex), this.stops.get(endIndex), td));
 	}
 
 	/**
