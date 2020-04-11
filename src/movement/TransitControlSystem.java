@@ -1,28 +1,30 @@
 package movement;
 
-import core.Coord;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.TreeMap;
+
 import core.SettingsError;
-import core.SimError;
-import input.WKTMapReader;
-import movement.map.MapNode;
-import movement.map.SimMap;
+import input.TransitReader;
 import movement.TransitTrip.TripDirection;
+import movement.map.SimMap;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-class TransitControlSystem {
+public class TransitControlSystem {
 
 	private short routeType;
     private List<TransitStop> stops;
-    private volatile TreeMap<Integer, TransitTrip> schedule;
+    private volatile TreeMap<Integer, ArrayList<TransitTrip>> schedule;
+
+    // tripsPerMobile[mobileId][departure times]
+    private ArrayList<LinkedList<TransitTrip>> tripsPerMobile = new ArrayList<LinkedList<TransitTrip>>();
     private Random r;
+    private TransitReader t_reader;
+    private int device_id;
 
     /** Type of the route ID: circular ({@value}).
      * After reaching the last node on path, the next node is the first node */
@@ -33,12 +35,12 @@ class TransitControlSystem {
 
     private final String COMMA_DELIMITER = ",";
 
-
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
-	TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
-		stops = readStops(stopsFile, map);
+	public TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
+		this.t_reader = new TransitReader(stopsFile, scheduleFile, nodesFile, map, okMapType);
+		stops = this.t_reader.getStops();
 		TransitStop start = stops.get(0);
 		TransitStop end = stops.get(stops.size() - 1); // TODO: reference trip may have different end
 
@@ -48,310 +50,42 @@ class TransitControlSystem {
 		    routeType = PINGPONG;
         }
 
-		// construct the reference trip one way
-        buildPaths(stops, nodesFile, map, okMapType);
-        schedule = readSchedule(scheduleFile);
+		// read schedule (s) and alternatives to the schedule list
+        schedule = this.t_reader.readSchedule();
+        setTripsPerVehicle();
+        
+        // the schedule is distributed over mobile nodes
         r = new Random();
+        
+        // Device_id is used as identifier to order the trips
+        // Every host receives an id that defines the trips it takes part.
+        device_id = 0;
 	}
 	
-	private void updateCoordinate(SimMap map, Coord c) {
-		double xOffset = map.getOffset().getX();
-		double yOffset = map.getOffset().getY();
-
-		if (map.isMirrored()) {
-			c.setLocation(c.getX(), -c.getY());
-		}
-		c.translate(xOffset, yOffset);
-
-	}
-
-	/**
-	 * Read the stop files to have an ordered list of stations
-	 * @param fileName
-	 * @param map
-	 * @return An ordered list of TransitStops
-	 */
-	private List<TransitStop> readStops(String fileName, SimMap map) {
-		List<TransitStop> stops = new ArrayList<>();
-
-		TransitStop previous = null;
-		FileReader fr;
-		try {
-			fr = new FileReader(fileName);
-		} catch (FileNotFoundException e) {
-			throw new SettingsError("Cannot find stops file.");
-		}
-		try (BufferedReader br = new BufferedReader(fr)) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] columns = line.split(COMMA_DELIMITER);
-				if (columns.length != 2) {
-					throw new SettingsError("Malformed stops file supplied, needs two columns.");
-				}
-				String[] coords = columns[0].split(" ");
-				if (coords.length != 2) {
-					throw new SettingsError("Malformed stops file supplied, " +
-							"needs two coordinate values, space separated.");
-				}
-				Coord c = new Coord(
-						Double.valueOf(coords[0]),
-						Double.valueOf(coords[1])
-				);
-				updateCoordinate(map, c);
-
-				MapNode node = map.getNodeByCoord(c);
-				if (node == null) {
-					throw new SettingsError("Stop "+coords[0]+", "+coords[1]+" (transformed: "+
-							c.getX()+", "+c.getY()+") is not a valid Map node");
-				}
-
-				int timeTo = Integer.parseInt(columns[1]);
-
-				TransitStop next = new TransitStop(node, timeTo);
-				next.setPrev(previous);
-				if (previous != null) {
-					previous.setNext(next);
-				}
-				previous = next;
-				stops.add(next);
-			}
-			if (stops.size() < 2) {
-				throw new SettingsError("Malformed stops file supplied: " + fileName +
-						"needs at least 2 stops to run simulation");
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NumberFormatException e2) {
-			throw new SettingsError("Malformed stops file supplied: " + fileName +
-					"first column must be two double values, second column int value");
-		}
-
-		return stops;
-	}
-
-	private TreeMap<Integer, TransitTrip> readSchedule(String fileName) {
-		TreeMap<Integer, TransitTrip> schedule = new TreeMap<>();
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-		Date timeStart = null;
-		try {
-			timeStart = sdf.parse("00:00:00");
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		FileReader fr;
-
-		try {
-			fr = new FileReader(fileName);
-		} catch (FileNotFoundException e) {
-			throw new SettingsError("Cannot find schedule file.");
-		}
-		try (BufferedReader br = new BufferedReader(fr)) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] columns = line.split(COMMA_DELIMITER);
-				if (columns.length != 3) {
-					throw new SettingsError("Malformed schedule file supplied, needs 3 columns.");
-				}
-
-				Date time = sdf.parse(columns[0]);
-				long seconds = (time.getTime() - timeStart.getTime()) / 1000;
-				int startIndex = Integer.parseInt(columns[1]);
-				int endIndex = Integer.parseInt(columns[2]);
-				schedule.put((int) seconds, new TransitTrip(
-						(int) seconds,
-						stops.get(startIndex),
-						stops.get(endIndex),
-						startIndex < endIndex ?
-								TripDirection.FORWARD :
-								TripDirection.BACKWARD
-				));
-			}
-
-			if (schedule.isEmpty()) {
-				schedule = null;
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NumberFormatException e) {
-			throw new SettingsError("Malformed stops file supplied, " +
-					"first column must be two double values, second column int value");
-		} catch (java.text.ParseException e) {
-			throw new SettingsError("Can not parse time");
-		} catch (IndexOutOfBoundsException e) {
-			throw new SettingsError("Stop index for trip is out of bounds");
-		}
-
-		return schedule;
-	}
-
-	
-	/**
-	 * Read a trip from node files. Return it as an ordered list of nodes
-	 * @param fileName
-	 * @param map
-	 * @return An ordered list of TransitStops
-	 */
-
-	List<MapNode> readPath(String nodesFile, List<TransitStop> stops, SimMap map, long okMapType) {
-		SimMap mapFromDisk;
-
-		List<MapNode> nodeList = new ArrayList<MapNode>();
-		List<Coord> coordList = new ArrayList<Coord>();
-		
-		WKTMapReader r = new WKTMapReader(true);
-		try {
-			coordList = r.loadPathAsList(new File(nodesFile), (int)okMapType);
-		} catch (IOException e) {
-			throw new SimError(e.toString(),e);
-		}
-		
-		for (Coord c: coordList) {
-			updateCoordinate(map, c);
-			MapNode n = map.getNodeByCoord(c);
-			if (n != null) {
-				nodeList.add(n);
-			} else {
-				throw new SettingsError("Stop " + c + " is not a valid Map node");
-			}			
-		}
-		
-		MapNode startNode = stops.get(0).node;
-
-		if (!startNode.getLocation().equals(coordList.get(0))) {
-			System.out.println("Error - inicial node not found in nodes file.");
-			System.exit(1);
-		}
-		
-		MapNode lastNode = stops.get(stops.size()-1).node;
-		if (!lastNode.getLocation().equals(coordList.get(coordList.size() - 1))) {
-			System.out.println("Error - final node not found in nodes file.");
-			System.exit(1);
-		}
-		
-		return nodeList;
-	}
-
-	
-	/**
-	 * 
-	 * @param stops
-	 * @param map 
-	 * @param okMapType
-	 * 
-	 * Assumes that the order in the nodes file is correct
-	 * This is necessary:
-	 * 
-	 *                 -------------------------
-	 * 	              /                         \
-	 * X ----------- y ----------- z ----------- w ----------- X
-	 *              /                             \
-	 *             o                               p
-	 *
-	 * y is neighbor of X (last hop), z, and w.
-	 * A node should not have two neighbors forward... 
-	 * The information that w is neighbor due to line o-y-w-p is lost.
-	 * 
-	 * Solution: assume that the file nodes are ordered and read the
-	 * right order direct from file
-	 */
-	
-	private void buildPaths(List<TransitStop> stops, String nodesFile, SimMap map, long okMapType) {
-		TransitStop currentStop = stops.get(0);
-		TransitStop nextStop = currentStop.getNext();
-		MapNode currentNode = currentStop.node;
-		MapNode nextStopNode = nextStop.node;
-		List<MapNode> orderedPath = readPath(nodesFile, stops, map, okMapType);
-
-		MapNode endNode = stops.get(stops.size() - 1).node; // TODO: when using reference trip, this might not be right. Fix it
-		MapNode lastWayPoint = new MapNode(null);
-		double distance = 0;
-        TransitWay p = new TransitWay();
-
-		//System.out.println("Stop Node:" + currentNode.toString());
-		int index = 0;
-		
-		while (!currentNode.equals(endNode)) {
-			p.addWaypoint(currentNode.getLocation());
-
-			MapNode nextNode = orderedPath.get(index+1);
-			distance += getDistance(currentNode, nextNode);
-			// neighbor is nextStopNode
-			if (nextNode.equals(nextStopNode)) {
-				p.setDuration(nextStop.timeTo);
-				p.setDistance(distance);
-
-				currentStop.setForward(p);
-				nextStop.setBackward(p.reversed());
-
-				distance = 0;
-				p = new TransitWay();
-
-				if (!nextNode.equals(endNode)) {
-					currentStop = nextStop;
-					nextStop = nextStop.getNext();
-					nextStopNode = nextStop.node;
-				}
-			}
-				
-			lastWayPoint = currentNode;
-			currentNode = nextNode;
-			index += 1;
-		}
-	}
-
-	private double getDistance(MapNode n1, MapNode n2) {
-		return n1.getLocation().distance(n2.getLocation());
-	}
-
-
     public short getRouteType() {
         return routeType;
     }
 
-
-    public synchronized TransitTrip getInitialTrip(int time) {
-		if (schedule == null) {
-			return defaultTrip(time);
-		}
-		if (schedule.size() == 0)
-			throw new SettingsError("There is a host group that has a higher number of hosts than "+
-					"trips in the respective schedule. nrofHosts must always be <= count of trips");
-		int key = schedule.ceilingKey(time);
-		return schedule.remove(key);
+    public synchronized TransitTrip getInitialTrip(int dev_id) {
+    	if (tripsPerMobile.get(dev_id).size() == 0)
+    		return null;
+    	return tripsPerMobile.get(dev_id).removeFirst();
 	}
 
-	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop) {
-		// Inexistent schedule (possibly bug?)
-		if (schedule == null ) {
-			System.out.println("Inexistent schedule - BUG");
-			return defaultTripForStop(time, currentStop);
-		}
-		// schedule empty or no more schedules
-		else if (schedule.values().isEmpty()) {
-			return null;
-		}
-		Integer key = schedule.ceilingKey(time);
-		if (key == null) {
-			return null;
-		}
+    
+	public synchronized TransitTrip getTripForStop(int time, TransitStop currentStop, int dev_id) {
+    	TransitTrip trip;
+    	
+    	if (tripsPerMobile.get(dev_id).isEmpty())
+    		return null;
 		
-		try {
-			while (!schedule.get(key).getFirstStop().equals(currentStop)) {
-				key = schedule.higherKey(key);
-				if (key == null)
-					return null;
-			}
-		}
-		catch(NullPointerException e) {
-			    // do something other
-			System.out.println("Oops! Error getting next trip");
-		}		
-		
-			return schedule.remove(key);
-	}
+    	trip = tripsPerMobile.get(dev_id).removeFirst();
 
+		assert (trip.getStartTime() >= time);
+    	assert (currentStop.node.getLocation().equals(trip.startLocation()));
+		return trip;
+	}
+	
 	private TransitTrip defaultTrip(int time) {
 		if (r.nextBoolean()) {
 			return new TransitTrip(
@@ -367,18 +101,138 @@ class TransitControlSystem {
 				stops.get(0),
 				TripDirection.BACKWARD
 		);
-
 	}
 
-	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
-		System.out.println ("WARNING -- default time trip -- error?");
-		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
-		return new TransitTrip(
-				time,
-				currentStop,
-				lastStop,
-				TripDirection.BACKWARD //FIXME!
-		);
+	// TODO: take a closer look to this function
+//	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
+//		System.out.println ("WARNING -- default time trip -- error?");
+//		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
+//		return new TransitTrip(
+//				time,
+//				currentStop,
+//				lastStop,
+//				TripDirection.BACKWARD //FIXME!
+//		);
+//	}
+	
+	/**
+	 * Based on the schedule, define the list of trips that each mobile device may serve.
+	 * @return An ordered list of TransitStops
+	 */
+	private void setTripsPerVehicle() {
+	    TreeMap<Integer, ArrayList<TransitTrip>> schedule_copy = (TreeMap<Integer, ArrayList<TransitTrip>>) schedule.clone();
+	    int device_int_id = 0;
+
+	    while (!schedule_copy.isEmpty()) {
+	    	tripsPerMobile.add(new LinkedList<TransitTrip>());
+	    	serve_trips_with_mobile(device_int_id, schedule_copy);
+		    device_int_id++;
+	    }	
+	}
+		
+	/**
+	 * Define all trips a single mobile can take responsibility.
+	 * It does not need an inicial station or time, since it will take any available.
+	 * @param startTrip: first trip to be served by this vehicle
+	 * @param device_id: id to order the vehicle to the trips queue (tripsPerMobile)
+	 * @param schedule: shallow copy of the schedule with the remaining trips to be served
+	 * @return An ordered list of TransitStops
+	 */
+	public int serve_trips_with_mobile(int device_id, TreeMap<Integer, ArrayList<TransitTrip>> schedule_copy) {
+		
+		int num_served_trips=0;
+	    int depart_after;
+		TransitStop depart_from;
+		
+		// get the first trip	
+		// TODO: after testing, use the original schedule
+		TransitTrip currentTrip = pop_from_schedule(-1, null, schedule_copy);
+				//schedule_copy.remove(schedule_copy.firstKey());
+		
+		while (currentTrip != null) {
+    		// add trip to the trip list of this vehicle
+    		tripsPerMobile.get(device_id).add(currentTrip);		
+    		
+    		// search the next trip that departs after the arrival of this trip from the arrival station
+			depart_after = currentTrip.getArrivalTime();
+			depart_from = currentTrip.getLastStop();
+    		//currentTrip = getTripForStopAtSchedule(depart_after, depart_from, schedule_copy);
+			currentTrip = pop_from_schedule(depart_after, depart_from, schedule_copy);
+    	}
+		return num_served_trips;
+	}
+	
+	/**
+	 * Every vehicle has an identifier that is used to order which trips it will serve.
+	 * @return the next available id
+	 */
+	public int getNewId() {
+		return device_id++;
+	}
+	
+	/**
+	 * Exclude the first entry of the tree after "at_time" departing from station
+	 * if the depart station does not matter, from_station=null
+	 * @param from_station
+	 * @param to_station
+	 * @param at_time
+	 * @return
+	 */
+	private TransitTrip pop_from_schedule(int at_time, TransitStop from_station, TreeMap<Integer, ArrayList<TransitTrip>> d_schedule) {
+		TransitTrip ttrip = null;
+		
+		int time = at_time;
+		int candidate_index = -1;
+		Map.Entry<Integer,ArrayList<TransitTrip>> entry = d_schedule.ceilingEntry(time);
+		
+		// no more schedules after "at_time"
+		if (entry == null) { 
+			return null; 
+		}
+		
+		// In the first trip the station does not matter
+		// Take the first trip as candidate
+		if (from_station == null) {
+			candidate_index = 0;
+		} else {		
+			// this is not the first trip of the vehicle.
+			// Find the next available trip departing from station it is currently located
+			while (entry != null) {
+				// entry.key == departing time, entry.value() List of trips departing at this time.
+				candidate_index = get_trip_index(from_station, entry.getValue());
+				if (candidate_index != -1) {
+					break;
+				}
+				// no candidate found in this line, try next
+				entry = d_schedule.higherEntry(entry.getKey());
+			}	
+		}
+		
+		if (entry != null) {
+			ttrip = entry.getValue().remove(candidate_index);
+			if (entry.getValue().size() == 0) {
+				d_schedule.remove(entry.getKey());
+			}
+		}
+
+		return ttrip;
+	}
+
+
+	/**
+	 * Given a list of TransitTrip, return the index of the one that 
+	 * departs from location loc
+	 * @return
+	 */
+	private int get_trip_index(TransitStop from_station, ArrayList<TransitTrip> tripList) {
+		int counter = 0;
+		for (TransitTrip t: tripList) {
+			if (t.startLocation().equals(from_station.node.getLocation())) {
+				return counter;
+			}
+			counter++;
+		}
+		return -1;
 	}
 }
 

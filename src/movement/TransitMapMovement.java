@@ -30,6 +30,8 @@ public class TransitMapMovement extends MapBasedMovement implements
 	private short routeType;
 	private double waitTime = 0;
 	private TransitTrip currentTrip;
+	private int control_system_id; 
+	private int number_of_trips_served;
 
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
@@ -50,7 +52,8 @@ public class TransitMapMovement extends MapBasedMovement implements
                 getOkMapNodeTypes()[0]
         );
 		routeType = system.getRouteType();
-
+		//control_system_id = system.getId();
+		number_of_trips_served = 0;
 	}
 
 	/**
@@ -62,6 +65,7 @@ public class TransitMapMovement extends MapBasedMovement implements
 		super(proto);
 		this.currentStopIndex = proto.currentStopIndex;
 		this.system = proto.system;
+		this.control_system_id = system.getNewId();
 		this.routeType = proto.routeType;
 	}
 
@@ -83,8 +87,10 @@ public class TransitMapMovement extends MapBasedMovement implements
 		if (currentTrip.atLastStop()) {
 			currentTrip = system.getTripForStop(
 					(int) SimClock.getTime(),
-					currentTrip.getCurrentStop()
+					currentTrip.getCurrentStop(),
+					this.control_system_id
 			);
+//			currentTrip = system.getTripForStop(control_system_id);
 			waitTime = 0;
 			if (currentTrip == null || currentTrip.getStartTime() - SimClock.getTime() > 1200) {
 				getHost().setCommunicationSystemON(false);
@@ -103,7 +109,8 @@ public class TransitMapMovement extends MapBasedMovement implements
 	 */
 	@Override
 	public Coord getInitialLocation() {
-		currentTrip = system.getInitialTrip((int) SimClock.getTime());
+		//currentTrip = system.getInitialTrip((int) SimClock.getTime());
+		currentTrip = system.getInitialTrip(control_system_id);
 		return currentTrip.startLocation().clone();
 	}
 

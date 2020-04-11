@@ -11,7 +11,7 @@ public class TransitStop {
     private TransitWay forward;
     private TransitWay backward;
 
-    TransitStop(MapNode node, int timeTo) {
+    public TransitStop(MapNode node, int timeTo) {
         this.node = node;
         this.timeTo = timeTo;
     }
@@ -59,5 +59,9 @@ public class TransitStop {
 
     public void setBackward(TransitWay backward) {
         this.backward = backward;
+    }
+    
+    public int timeTo() {
+    	return this.timeTo;
     }
 }

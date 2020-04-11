@@ -10,7 +10,7 @@ public class TransitTrip {
     private TransitStop currentStop;
     private TripDirection direction;
 
-    enum TripDirection {
+    public enum TripDirection {
         FORWARD,
         BACKWARD
     }
@@ -51,6 +51,10 @@ public class TransitTrip {
         return firstStop;
     }
 
+    public TransitStop getLastStop() {
+        return lastStop;
+    }
+
     public TransitStop getCurrentStop() {
         return currentStop;
     }
@@ -61,5 +65,15 @@ public class TransitTrip {
 
     public int getStartTime() {
         return startTime;
+    }
+    
+    public int getArrivalTime() {
+    	TransitStop ts = firstStop;
+    	int sum=0;
+    	do{
+    		sum += ts.timeTo();
+    		ts = ts.getNext();
+    	} while (ts != null);
+    	return sum + getStartTime();
     }
 }
