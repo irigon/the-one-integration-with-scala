@@ -66,18 +66,6 @@ public class TransitControlSystem {
         return routeType;
     }
 
-//    public synchronized TransitTrip getInitialTrip(int time) {
-//		if (schedule == null) {
-//			return defaultTrip(time);
-//		}
-//		if (schedule.size() == 0)
-//			throw new SettingsError("There is a host group that has a higher number of hosts than "+
-//					"trips in the respective schedule. nrofHosts must always be <= count of trips");
-//		int key = schedule.ceilingKey(time);
-//		// TODO FIXME - just get the first 
-//		return schedule.remove(key).get(0);
-//	}
-
     public synchronized TransitTrip getInitialTrip(int dev_id) {
     	if (tripsPerMobile.get(dev_id).size() == 0)
     		return null;
@@ -97,54 +85,6 @@ public class TransitControlSystem {
     	assert (currentStop.node.getLocation().equals(trip.startLocation()));
 		return trip;
 	}
-
-//	public synchronized TransitTrip getTripForStop(int control_system_id, TransitStop depart_from) {
-//		if (tripsPerMobile.get(control_system_id).isEmpty()) { 
-//			return null;
-//		}
-//		int new_departure_time = tripsPerMobile.get(control_system_id).remove();
-//		TransitTrip newTrip = schedule.get(new_departure_time);
-//		try {	// find the first possible trip departing from "depart_from" 
-//			while (!schedule.get(new_departure).getFirstStop().equals(depart_from)) {
-//				new_departure = schedule.higherKey(new_departure);
-//				if (new_departure == null)
-//					return null;
-//			}
-//		}
-//		catch(NullPointerException e) {
-//			    // do something other
-//			System.out.println("Oops! Error getting next trip");
-//		}		
-//		return schedule.remove(new_departure);
-//	}
-	
-//	public synchronized TransitTrip getTripForStopAtSchedule(int depart_after, TransitStop depart_from, TreeMap<Integer,ArrayList<TransitTrip>> localSchedule) {
-//
-//		if (localSchedule == null ) {
-//			assert(false);
-//			return defaultTripForStop(depart_after, depart_from);
-//		}
-//		
-//		// Get the next departure time after "depart_after"
-//		Integer new_departure = localSchedule.ceilingKey(depart_after);
-//
-//		if (new_departure == null) { //no further trips to be served
-//			return null;
-//		}
-//		
-//		try {	// find the first possible trip departing from "depart_from" 
-//			while (!localSchedule.get(new_departure).getFirstStop().equals(depart_from)) {
-//				new_departure = localSchedule.higherKey(new_departure);
-//				if (new_departure == null)
-//					return null;
-//			}
-//		}
-//		catch(NullPointerException e) {
-//			    // do something other
-//			System.out.println("Oops! Error getting next trip");
-//		}		
-//		return localSchedule.remove(new_departure);
-//	}
 	
 	private TransitTrip defaultTrip(int time) {
 		if (r.nextBoolean()) {
@@ -163,16 +103,17 @@ public class TransitControlSystem {
 		);
 	}
 
-	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
-		System.out.println ("WARNING -- default time trip -- error?");
-		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
-		return new TransitTrip(
-				time,
-				currentStop,
-				lastStop,
-				TripDirection.BACKWARD //FIXME!
-		);
-	}
+	// TODO: take a closer look to this function
+//	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
+//		System.out.println ("WARNING -- default time trip -- error?");
+//		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
+//		return new TransitTrip(
+//				time,
+//				currentStop,
+//				lastStop,
+//				TripDirection.BACKWARD //FIXME!
+//		);
+//	}
 	
 	/**
 	 * Based on the schedule, define the list of trips that each mobile device may serve.
@@ -221,10 +162,13 @@ public class TransitControlSystem {
 		return num_served_trips;
 	}
 	
-	public int getId() {
+	/**
+	 * Every vehicle has an identifier that is used to order which trips it will serve.
+	 * @return the next available id
+	 */
+	public int getNewId() {
 		return device_id++;
 	}
-	
 	
 	/**
 	 * Exclude the first entry of the tree after "at_time" departing from station

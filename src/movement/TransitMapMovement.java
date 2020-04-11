@@ -65,7 +65,7 @@ public class TransitMapMovement extends MapBasedMovement implements
 		super(proto);
 		this.currentStopIndex = proto.currentStopIndex;
 		this.system = proto.system;
-		this.control_system_id = system.getId();
+		this.control_system_id = system.getNewId();
 		this.routeType = proto.routeType;
 	}
 
