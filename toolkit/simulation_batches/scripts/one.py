@@ -9,7 +9,7 @@ from pathlib import Path
 
 # The goal of this script is to automate the simulations in the-ONE
 
-THE_ONE_SCRIPTS = "/home/lento/Informatic/Programming/Java/the-one-scripts/"
+THE_ONE_SCRIPTS = "/home/lento/eclipse-workspace-new/the-one-transit/toolkit/simulation_batches/"
 the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
 
 
@@ -50,23 +50,25 @@ for scenario in scenario_list:
     for entry in dict_list:
         scenario_name = scenario.split('_')[0]
         # ignore simulations that were performed
-        report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_MessageStatsReport.txt".format(
+        report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_MovementModel.warmup:{}_Events1.interval:{}_MessageStatsReport.txt".format(
             scenario_name,
             entry['Group.router'],
             entry['Group.bufferSize'],
             entry['Group.msgTtl'],
-            entry['Events1.size']
+            entry['Events1.size'],
+            entry['MovementModel.warmup'],
+            entry['Events1.interval']
         )
 
 
-#        if path.exists(the_one_path + "reports/" + report_name):
-#            print("Ignoring existing simulation:  {}".format(report_name))
-#            continue
+        if path.exists(the_one_path + "reports/" + report_name):
+            print("Ignoring existing simulation:  {}".format(report_name))
+            continue
 
 
         # copia para default_settings
         shutil.copyfile(defaults, default_settings_file)
-        complete_name = scenario_name + "_Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSize%%_Group.msgTtl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%"
+        complete_name = scenario_name + "_Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSize%%_Group.msgTtl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_MovementModel.warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%"
         st.setValues(default_settings_file, "Scenario.name", complete_name)
 
         print("Setting values: {}".format(entry))

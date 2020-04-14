@@ -8,7 +8,7 @@ Scenario.name = Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSiz
 Scenario.simulateConnections = true
 Scenario.updateInterval = 0.1
 # 43200s == 12h
-Scenario.endTime = 43200
+Scenario.endTime = 23200
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
