@@ -70,10 +70,14 @@ public class TransitTrip {
     public int getArrivalTime() {
     	TransitStop ts = firstStop;
     	int sum=0;
-    	do{
-    		sum += ts.timeTo();
-    		ts = ts.getNext();
-    	} while (ts != null);
-    	return sum + getStartTime();
+    	while (! (ts.node == lastStop.node)){
+    		sum += ts.timeTo(); 		
+    		ts = (direction == TripDirection.FORWARD) ? ts.getNext(): ts.getPrev();
+    	} 
+
+    	
+    	sum += ts.timeTo() + getStartTime();
+    	//System.out.println("Device departing at " + getStartTime() + " arrives at " + sum);
+    	return sum;
     }
 }

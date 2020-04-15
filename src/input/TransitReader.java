@@ -36,8 +36,6 @@ public class TransitReader {
     private long okMapType;
     private List<TransitStop> stops;
 
-
-
     /*
      * We currently consider 1 stopFile and 1 scheduleFile.
      * This might change if we add alternative schedules
@@ -187,42 +185,6 @@ public class TransitReader {
 			schedule = null;
 		}
 		
-//		FileReader fr;
-//		try {
-//			fr = new FileReader(this.scheduleFilename);
-//		} catch (FileNotFoundException e) {
-//			throw new SettingsError("Cannot find schedule file.");
-//		}
-//		try (BufferedReader br = new BufferedReader(fr)) {
-//			String line;
-//			
-//			while ((line = br.readLine()) != null) {
-//				
-//
-//				tr_curr_line = getTripFromLine(line);
-//				depart_time = tr_curr_line.getStartTime();
-//
-//				// if key not in map, add list
-//				if (schedule.get(depart_time) == null) {
-//					schedule.put(depart_time, new ArrayList<TransitTrip>());
-//				}
-//				
-//				schedule.get(depart_time).add(tr_curr_line);
-//			}
-//
-//			if (schedule.isEmpty()) {
-//				schedule = null;
-//			}
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (NumberFormatException e) {
-//			throw new SettingsError("Malformed stops file supplied, " +
-//					"first column must be two double values, second column int value");
-//		} catch (IndexOutOfBoundsException e) {
-//			throw new SettingsError("Stop index for trip is out of bounds");
-//		}
-
 		return schedule;
 	}
 	

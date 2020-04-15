@@ -1,5 +1,6 @@
 package movement;
 
+import core.Coord;
 import movement.map.MapNode;
 
 public class TransitStop {
@@ -63,5 +64,10 @@ public class TransitStop {
     
     public int timeTo() {
     	return this.timeTo;
+    }
+    
+    static public TransitStop dummy() {
+    	MapNode mn = new MapNode(new Coord(0,0));
+    	return new TransitStop(mn, 0);
     }
 }

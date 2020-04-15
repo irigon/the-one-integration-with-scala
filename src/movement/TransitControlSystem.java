@@ -25,6 +25,7 @@ public class TransitControlSystem {
     private Random r;
     private TransitReader t_reader;
     private int device_id;
+    String scheduleFile;
 
     /** Type of the route ID: circular ({@value}).
      * After reaching the last node on path, the next node is the first node */
@@ -39,10 +40,12 @@ public class TransitControlSystem {
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
 	public TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
+		int num_vehicles=0;
+		this.scheduleFile = scheduleFile;
 		this.t_reader = new TransitReader(stopsFile, scheduleFile, nodesFile, map, okMapType);
 		stops = this.t_reader.getStops();
 		TransitStop start = stops.get(0);
-		TransitStop end = stops.get(stops.size() - 1); // TODO: reference trip may have different end
+		TransitStop end = stops.get(stops.size() - 1); 
 
 		if (start.equals(end)) {
 		    routeType = CIRCULAR;
@@ -52,7 +55,8 @@ public class TransitControlSystem {
 
 		// read schedule (s) and alternatives to the schedule list
         schedule = this.t_reader.readSchedule();
-        setTripsPerVehicle();
+        num_vehicles = setTripsPerVehicle();
+        System.out.println(num_vehicles + " in line defined by file " + scheduleFile);
         
         // the schedule is distributed over mobile nodes
         r = new Random();
@@ -67,8 +71,12 @@ public class TransitControlSystem {
     }
 
     public synchronized TransitTrip getInitialTrip(int dev_id) {
-    	if (tripsPerMobile.get(dev_id).size() == 0)
-    		return null;
+    	// if there are more devices then necessary, a dummy trip that will never happen
+    	if (dev_id >= tripsPerMobile.size()) {
+    		System.out.println("WARNING: device number: " + dev_id + ". It seems there are more devices than necessary on schedule " + scheduleFile);
+    		TransitStop ts = TransitStop.dummy();
+    		return new TransitTrip(2147483647, ts, ts, TransitTrip.TripDirection.BACKWARD);
+    	}
     	return tripsPerMobile.get(dev_id).removeFirst();
 	}
 
@@ -86,40 +94,29 @@ public class TransitControlSystem {
 		return trip;
 	}
 	
-	private TransitTrip defaultTrip(int time) {
-		if (r.nextBoolean()) {
-			return new TransitTrip(
-					time,
-					stops.get(0),
-					stops.get(stops.size()-1),
-					TripDirection.FORWARD
-			);
-		}
-		return new TransitTrip(
-				time,
-				stops.get(stops.size()-1),
-				stops.get(0),
-				TripDirection.BACKWARD
-		);
-	}
-
-	// TODO: take a closer look to this function
-//	private TransitTrip defaultTripForStop(int time, TransitStop currentStop) {
-//		System.out.println ("WARNING -- default time trip -- error?");
-//		TransitStop lastStop = currentStop.equals(stops.get(0)) ? stops.get(stops.size()-1) : stops.get(0);
+//	private TransitTrip defaultTrip(int time) {
+//		if (r.nextBoolean()) {
+//			return new TransitTrip(
+//					time,
+//					stops.get(0),
+//					stops.get(stops.size()-1),
+//					TripDirection.FORWARD
+//			);
+//		}
 //		return new TransitTrip(
 //				time,
-//				currentStop,
-//				lastStop,
-//				TripDirection.BACKWARD //FIXME!
+//				stops.get(stops.size()-1),
+//				stops.get(0),
+//				TripDirection.BACKWARD
 //		);
 //	}
+
 	
 	/**
 	 * Based on the schedule, define the list of trips that each mobile device may serve.
 	 * @return An ordered list of TransitStops
 	 */
-	private void setTripsPerVehicle() {
+	public int setTripsPerVehicle() {
 	    TreeMap<Integer, ArrayList<TransitTrip>> schedule_copy = (TreeMap<Integer, ArrayList<TransitTrip>>) schedule.clone();
 	    int device_int_id = 0;
 
@@ -128,6 +125,7 @@ public class TransitControlSystem {
 	    	serve_trips_with_mobile(device_int_id, schedule_copy);
 		    device_int_id++;
 	    }	
+	    return device_int_id;
 	}
 		
 	/**
@@ -233,6 +231,15 @@ public class TransitControlSystem {
 			counter++;
 		}
 		return -1;
+	}
+	
+	// Public to test
+	public TreeMap<Integer, ArrayList<TransitTrip>> get_schedule(){
+		return this.schedule;
+	}
+
+	public ArrayList<LinkedList<TransitTrip>> get_tripsPerMobile(){
+		return this.tripsPerMobile;
 	}
 }
 
