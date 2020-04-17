@@ -4,11 +4,12 @@
 
 ## Scenario settings
 #Scenario.name = default_scenario
-Scenario.name = Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSize%%_Group.msgTtl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%
+Scenario.name = Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSize%%_Group.msgTtl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_MovementModel.warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%
+
 Scenario.simulateConnections = true
-Scenario.updateInterval = 0.1
+Scenario.updateInterval = 1.0
 # 43200s == 12h
-Scenario.endTime = 23200
+Scenario.endTime = 50400
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
