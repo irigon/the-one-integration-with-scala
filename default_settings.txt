@@ -3,11 +3,13 @@
 #
 
 ## Scenario settings
-Scenario.name = default_scenario
+#Scenario.name = default_scenario
+Scenario.name = freiburg1True_router:%%Group.router%%_bSize:%%Group.bufferSize%%_Ttl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_endTime:%%Scenario.endTime%%_warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%_updateInt:%%Scenario.updateInterval%%_beta:%%ProphetV2Router.beta%%_gamma:%%ProphetV2Router.gamma%%
+
 Scenario.simulateConnections = true
 Scenario.updateInterval = 0.1
 # 43200s == 12h
-Scenario.endTime = 43200
+Scenario.endTime = 64800
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
@@ -19,8 +21,8 @@ Scenario.endTime = 43200
 # "Bluetooth" interface for all nodes
 btInterface.type = SimpleBroadcastInterface
 # Transmit speed of 2 Mbps = 250kBps
-btInterface.transmitSpeed = 250k
-btInterface.transmitRange = 40
+btInterface.transmitSpeed = 100M
+btInterface.transmitRange = 20
 
 # High speed, long range, interface for group 4
 highspeedInterface.type = SimpleBroadcastInterface
@@ -50,8 +52,9 @@ highspeedInterface.transmitRange = 200
 
 
 
-Group.router = EpidemicRouter
-Group.bufferSize = 5M
+#Group.router = [EpidemicRouter;ProphetV2Router;MaxPropRouter;SprayAndWaitRouter]
+Group.router = ProphetV2Router
+Group.bufferSize = 1000G
 Group.waitTime = 10,15
 # All nodes have the bluetooth interface
 Group.nrofInterfaces = 1
@@ -59,7 +62,8 @@ Group.interface1 = btInterface
 # Walking speeds
 Group.speed = 5,7
 # Message TTL of 300 minutes (5 hours)
-Group.msgTtl = 300
+Group.msgTtl = 400
+
 
 
 
@@ -70,9 +74,9 @@ Events.nrof = 1
 Events1.class = MessageEventGenerator
 # (following settings are specific for the MessageEventGenerator class)
 # Creation interval in seconds (one new message every 25 to 35 seconds)
-Events1.interval = 25,35
-# Message sizes (500kB - 1MB)
-Events1.size = 500k,1M
+Events1.interval = 1,5
+# Message sizes (500kB - 100MB)
+Events1.size = 100k,100M
 # range of message source/destination addresses
 Events1.hosts = 0,126
 # Message ID prefix
@@ -103,6 +107,10 @@ Report.report2 = ContactTimesReport
 
 ## Default settings for some routers settings
 ProphetRouter.secondsInTimeUnit = 30
+ProphetV2Router.secondsInTimeUnit = 1
+ProphetV2Router.typicalInterval = 50
+ProphetV2Router.beta = 0.9
+ProphetV2Router.gamma = 0.999885791
 SprayAndWaitRouter.nrofCopies = 6
 SprayAndWaitRouter.binaryMode = true
 
