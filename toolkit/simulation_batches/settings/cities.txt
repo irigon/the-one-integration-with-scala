@@ -109,6 +109,8 @@ Report.report2 = ContactTimesReport
 ProphetRouter.secondsInTimeUnit = 30
 ProphetV2Router.secondsInTimeUnit = 1
 ProphetV2Router.typicalInterval = 50
+ProphetV2Router.beta = 0.9
+ProphetV2Router.gamma = 0.999885791
 SprayAndWaitRouter.nrofCopies = 6
 SprayAndWaitRouter.binaryMode = true
 
