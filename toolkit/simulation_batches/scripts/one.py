@@ -9,8 +9,9 @@ from pathlib import Path
 
 # The goal of this script is to automate the simulations in the-ONE
 
-THE_ONE_SCRIPTS = "/home/lento/eclipse-workspace-new/the-one-transit/toolkit/simulation_batches/"
-the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
+#the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
+the_one_path = "/home/simulant/Simulation/the-one-transit/"
+THE_ONE_SCRIPTS = the_one_path + "toolkit/simulation_batches/"
 
 
 settings_dir = THE_ONE_SCRIPTS + "settings/"
@@ -45,12 +46,35 @@ dic = st.read_config(script_path)
 # return a list of dicts from the cartesian product of dic values
 dict_list = st.product(dic)
 
+# set default values for variable specific (e.g. PRoPHET), overwriting the product.
+# This creates several repeated entries, that will be elimiated next.
+# e.g. sprayAndWait routing with PRoPHET.gamma=0.1 and PRoPHET.gamma=0.2 are united to
+# PRoPHET.gamma=default_value, since SprayAndWait do not care about PRoPHET.gamma
+PRoPHET_vars=[x for x in dic.keys() if x.startswith('ProphetV2Router')]
+# public static final double DEFAULT_GAMMA = 0.999885791;
+default_gamma='0.999885791'
+# public static final double DEFAULT_BETA = 0.9;
+default_beta='0.9'
+for item in dict_list:
+    if item['Group.router'] != 'ProphetV2Router':
+        item['ProphetV2Router.beta']=default_beta
+        item['ProphetV2Router.gamma']=default_gamma 
+        
+dict_list = [dict(t) for t in {tuple(d.items()) for d in dict_list}]
+
+#for i in dict_list:
+#    print(i.values())
+
+
+
 for scenario in scenario_list:
     # for each dic (item of the cartesian product)
     for entry in dict_list:
         scenario_name = scenario.split('_')[0]
         # ignore simulations that were performed
-        report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
+        #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
+        name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}"
+        end_name = name_var.format( # end_name is used to name the reports and output data
             scenario_name,
             entry['Group.router'],
             entry['Group.bufferSize'],
@@ -59,19 +83,38 @@ for scenario in scenario_list:
             entry['Scenario.endTime'],
             entry['MovementModel.warmup'],
             entry['Events1.interval'],
-            entry['Scenario.updateInterval']
+            entry['Scenario.updateInterval'],
+            entry['Scenario.updateInterval'],
+            entry['ProphetV2Router.beta'],
+            entry['ProphetV2Router.gamma']
+        )
+        # scen config is used in the default configuration
+        scen_config_name = name_var.format( 
+            scenario_name,
+            "%%Group.router%%",
+            "%%Group.bufferSize%%",
+            "%%Group.msgTtl%%",
+            "%%Events1.size%%",
+            "%%Scenario.endTime%%",
+            "%%MovementModel.warmup%%",
+            "%%Events1.interval%%",
+            "%%Scenario.updateInterval%%",
+            "%%ProphetV2Router.beta%%",
+            "%%ProphetV2Router.gamma%%"
         )
 
 
-        if path.exists(the_one_path + "reports/" + report_name):
+        report_name = the_one_path + "reports/" + end_name + "_MessageStatsReport.txt"
+        if path.exists(report_name):
             print("Ignoring existing simulation:  {}".format(report_name))
             continue
+        else:
+            print(report_name + " does not exist. Simulating...")
 
 
         # copia para default_settings
         shutil.copyfile(defaults, default_settings_file)
-        complete_name = scenario_name + "_Group.router:%%Group.router%%_Group.bufferSize:%%Group.bufferSize%%_Group.msgTtl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_Scenario.endTime:%%Scenario.endTime%%_MovementModel.warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%_Scenario.updateInterval:%%Scenario.updateInterval%%"
-        st.setValues(default_settings_file, "Scenario.name", complete_name)
+        st.setValues(default_settings_file, "Scenario.name", scen_config_name)
 
         print("Setting values: {}".format(entry))
         for k, v in entry.items():
@@ -90,7 +133,7 @@ for scenario in scenario_list:
             call(["./one.sh", "-b", "1", scenario])
 
         # backup configuration files
-        backup_configuration_file(default_settings_file, report_name + "_default_settings")
+        backup_configuration_file(default_settings_file, end_name + "_default_settings")
         
         call(["./one.sh", "-b", "1", scenario])
 
