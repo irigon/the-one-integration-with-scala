@@ -9,8 +9,8 @@ from pathlib import Path
 
 # The goal of this script is to automate the simulations in the-ONE
 
-#the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
-the_one_path = "/home/simulant/Simulation/the-one-transit/"
+the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
+#the_one_path = "/home/simulant/Simulation/the-one-transit/"
 THE_ONE_SCRIPTS = the_one_path + "toolkit/simulation_batches/"
 
 
@@ -73,7 +73,7 @@ for scenario in scenario_list:
         scenario_name = scenario.split('_')[0]
         # ignore simulations that were performed
         #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
-        name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}"
+        name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}_tSpeed:{}_tRange:{}"
         end_name = name_var.format( # end_name is used to name the reports and output data
             scenario_name,
             entry['Group.router'],
@@ -86,7 +86,9 @@ for scenario in scenario_list:
             entry['Scenario.updateInterval'],
             entry['Scenario.updateInterval'],
             entry['ProphetV2Router.beta'],
-            entry['ProphetV2Router.gamma']
+            entry['ProphetV2Router.gamma'],
+            entry['btInterface.transmitSpeed'],
+            entry['btInterface.transmitRange']
         )
         # scen config is used in the default configuration
         scen_config_name = name_var.format( 
@@ -100,7 +102,9 @@ for scenario in scenario_list:
             "%%Events1.interval%%",
             "%%Scenario.updateInterval%%",
             "%%ProphetV2Router.beta%%",
-            "%%ProphetV2Router.gamma%%"
+            "%%ProphetV2Router.gamma%%",
+            "%%btInterface.transmitSpeed%%",
+            "%%btInterface.transmitRange%%"
         )
 
 
