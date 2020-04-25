@@ -1,7 +1,10 @@
 package movement;
 
+import java.util.List;
+
 import core.Coord;
 import core.Settings;
+import movement.map.MapNode;
 
 
 /**
@@ -67,5 +70,11 @@ public class StationaryMultiPointMovement extends MapBasedMovement {
 	public StationaryMultiPointMovement replicate() {
 		return new StationaryMultiPointMovement(this);
 	}
+	
+	@Override
+	protected void checkMapConnectedness(List<MapNode> nodes) {
+		// map needs not to be connected, since it is combined out of all route maps
+	}
 
+	
 }
