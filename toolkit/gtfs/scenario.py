@@ -22,24 +22,10 @@ STATIONS_FILE = 'stations.wkt'
 HOST_ID_DELIM = '_'
 MIN_SWITCH_TIME = 60  # seconds
 
-def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
-    # reads all routes (relations with tag[k="type"][v="route"])
-    # from osm file
-
-    logging.info("reading route paths from osm file")
-    with open(osm_file) as fp:
-        orp = OsmRouteParser(fp)
-    routes = orp.parse_routes()
-    ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
-
-    gtfs.set_ref_trips(ref_routes)
-    return routes
-
 def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
     # reads route paths from gtfs shapes
 
     logging.info("reading route paths from gtfs shapes")
-    gtfs.build_ref_trips()
     route_names = gtfs.route_names()
     paths = gtfs.shape_paths()
     stops = gtfs.shape_stops()
@@ -64,13 +50,15 @@ def main(args):
     gtfs = GTFSReader()
     gtfs.load_feed(args.gtfs_file, route_types=route_types, with_shapes=with_shapes)
 
-    if args.osm:
-        routes = osm_routes(gtfs, args.osm)
-    else:
-        routes = shape_routes(gtfs)
+    chosen_day = gtfs.get_first_day_from_feed('Monday')
+    gtfs.set_trips_of_interest(type=0.0, day=chosen_day)
+    gtfs.set_stop_times()
+    gtfs.build_ref_trips()
+
+    routes = shape_routes(gtfs)
 
     logging.info("building schedule and trip durations")
-    schedule = gtfs.schedule(weekday_type=args.weekday, max_exceptions=args.max_exceptions)
+    schedule = gtfs.schedule()
     durations = gtfs.trip_durations()
 
     points = set()
