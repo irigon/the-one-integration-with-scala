@@ -62,7 +62,11 @@ class GTFSReader:
 
         # get all services for this week(end) day
         day_name = chosen_day.strftime("%A").lower()
-        services_of_the_day = self.services[self.services[day_name] == 1.0][['service_id', day_name]]
+        services_of_the_day = self.services[self.services[day_name] == 1.0][['service_id', day_name, 'start_date', 'end_date']]
+
+        # exclude services that have a start_date after or end_date before the chosen_date
+        services_of_the_day = services_of_the_day[services_of_the_day['start_date'] <= float(chosen_day_str)]
+        services_of_the_day = services_of_the_day[services_of_the_day['end_date'] >= float(chosen_day_str)]
 
         # add trips that exceptionally happen on this day
         all_services = pd.concat([services_of_the_day, exceptionaly_work_this_day], ignore_index=True)
@@ -89,6 +93,7 @@ class GTFSReader:
         # define a day between start and end --> TODO: use a selected day instead of choosing a random one
 
         self.trips_of_interest = self.apply_exceptions(day, self.trips_of_interest)
+
 
 
         # retain just the required information:
@@ -280,6 +285,12 @@ class GTFSReader:
         if day.strftime("%A") == day_name:
             return day
         return None
+
+    def print_feed_info(self):
+        start_day_str = self.services.start_date.sort_values().iloc[0]
+        end_day_str = self.services.end_date.sort_values().iloc[-1]
+        #end_day_str = self.services.end_date.head(1).iloc[0]
+        print("This feed defines transit from ")
 
 
     def schedule(self):
