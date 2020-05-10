@@ -1,20 +1,27 @@
 # create configurations based on filename and run one.sh on the create configuration
 
 import os, shutil
+from configparser import ConfigParser
 from os import path
 from optparse import OptionParser
 from subprocess import call
 import script_tools as st
 from pathlib import Path
 
+
 # The goal of this script is to automate the simulations in the-ONE
 
-the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
+#the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
 #the_one_path = "/home/simulant/Simulation/the-one-transit/"
+
+config = ConfigParser()
+config.read('defaults.cfg')
+
+the_one_path = config.get('path', 'the_one_path')
 THE_ONE_SCRIPTS = the_one_path + "toolkit/simulation_batches/"
-
-
 settings_dir = THE_ONE_SCRIPTS + "settings/"
+
+
 
 parser = OptionParser()
 parser.add_option("-i", "--input", dest="opt_input",
@@ -50,7 +57,7 @@ dict_list = st.product(dic)
 # This creates several repeated entries, that will be elimiated next.
 # e.g. sprayAndWait routing with PRoPHET.gamma=0.1 and PRoPHET.gamma=0.2 are united to
 # PRoPHET.gamma=default_value, since SprayAndWait do not care about PRoPHET.gamma
-PRoPHET_vars=[x for x in dic.keys() if x.startswith('ProphetV2Router')]
+#PRoPHET_vars=[x for x in dic.keys() if x.startswith('ProphetV2Router')]
 # public static final double DEFAULT_GAMMA = 0.999885791;
 default_gamma='0.999885791'
 # public static final double DEFAULT_BETA = 0.9;
@@ -83,7 +90,6 @@ for scenario in scenario_list:
             entry['Scenario.endTime'],
             entry['MovementModel.warmup'],
             entry['Events1.interval'],
-            entry['Scenario.updateInterval'],
             entry['Scenario.updateInterval'],
             entry['ProphetV2Router.beta'],
             entry['ProphetV2Router.gamma'],
