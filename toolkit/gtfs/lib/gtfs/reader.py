@@ -26,7 +26,7 @@ class GTFSReader:
     ref_trips: DataFrame
     route_types: []
 
-    def load_feed(self, gtfs_file: str, route_types: [int], with_shapes: bool):
+    def load_feed(self, gtfs_file: str, with_shapes: bool):
         try:
             with zipfile.ZipFile(gtfs_file) as z:
                 to_read = GTFS_FILES
@@ -69,7 +69,7 @@ class GTFSReader:
         services_of_the_day = services_of_the_day[services_of_the_day['end_date'] >= float(chosen_day_str)]
 
         # add trips that exceptionally happen on this day
-        all_services = pd.concat([services_of_the_day, exceptionaly_work_this_day], ignore_index=True)
+        all_services = pd.concat([services_of_the_day, exceptionaly_work_this_day], ignore_index=True, sort=False)
         all_services = all_services[~all_services['service_id'].isin(exception_not_work_this_day['service_id'])]
         trips_of_interest = trips[trips['service_id'].isin(all_services['service_id'])]
         return trips_of_interest
@@ -79,9 +79,9 @@ class GTFSReader:
     #   2.1 Exclude services from this day that exceptionally this day should not work
     #   2.2 Add services that work exceptionally on the chosen day
     # 3. Add stop_times
-    def set_trips_of_interest(self, type, day):
+    def set_trips_of_interest(self, type: float, day):
         # filter out routes of interest
-        routes = self.routes[self.routes.route_type == type]
+        routes = self.routes[self.routes.route_type == float(type)]
 
         # merge routes of interest and their trips
         self.trips_of_interest = pd.merge(routes, self.trips, on='route_id')
