@@ -22,24 +22,10 @@ STATIONS_FILE = 'stations.wkt'
 HOST_ID_DELIM = '_'
 MIN_SWITCH_TIME = 60  # seconds
 
-def osm_routes(gtfs: GTFSReader, osm_file) -> List[TransitRoute]:
-    # reads all routes (relations with tag[k="type"][v="route"])
-    # from osm file
-
-    logging.info("reading route paths from osm file")
-    with open(osm_file) as fp:
-        orp = OsmRouteParser(fp)
-    routes = orp.parse_routes()
-    ref_routes = [(r.name, r.first, r.last, len(r.stops)) for r in routes]
-
-    gtfs.set_ref_trips(ref_routes)
-    return routes
-
 def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
     # reads route paths from gtfs shapes
 
     logging.info("reading route paths from gtfs shapes")
-    gtfs.build_ref_trips()
     route_names = gtfs.route_names()
     paths = gtfs.shape_paths()
     stops = gtfs.shape_stops()
@@ -57,20 +43,24 @@ def shape_routes(gtfs: GTFSReader) -> List[TransitRoute]:
 
 def main(args):
     scenario = args.name or basename_without_ext(args.gtfs_file)
-    route_types = args.types.split(',')
+    route_type = args.type
     with_shapes = not args.osm
 
     logging.info('reading gtfs feed in '+args.gtfs_file)
     gtfs = GTFSReader()
-    gtfs.load_feed(args.gtfs_file, route_types=route_types, with_shapes=with_shapes)
+    gtfs.load_feed(args.gtfs_file, with_shapes=with_shapes)
 
-    if args.osm:
-        routes = osm_routes(gtfs, args.osm)
-    else:
-        routes = shape_routes(gtfs)
+    gtfs.print_feed_info()
+
+    chosen_day = gtfs.get_first_day_from_feed('Monday')
+    gtfs.set_trips_of_interest(type=route_type, day=chosen_day)
+    gtfs.set_stop_times()
+    gtfs.build_ref_trips()
+
+    routes = shape_routes(gtfs)
 
     logging.info("building schedule and trip durations")
-    schedule = gtfs.schedule(weekday_type=args.weekday, max_exceptions=args.max_exceptions)
+    schedule = gtfs.schedule()
     durations = gtfs.trip_durations()
 
     points = set()
@@ -258,7 +248,7 @@ if __name__ == '__main__':
                         help='the GTFS feed to parse (.zip file).')
     parser.add_argument('--osm', type=str,
                         help='the .osm file to match routes with if no shapes are present in the gtfs feed.')
-    parser.add_argument('--types', '-t', default='0', type=str,
+    parser.add_argument('--type', '-t', default='0', type=str,
                         help='limits the the route types to parse from the gtfs feed, comma separated. ' +
                         'See https://developers.google.com/transit/gtfs/reference/#routestxt for route type ' +
                         'definitions. Defaults to 0 (tram routes)')
@@ -266,10 +256,6 @@ if __name__ == '__main__':
                         help='limits the weekdays to parse trip for from the gtfs feed.' +
                         'Options: 0 - only working days (mo-fri), 1 - only saturdays, 2 - only sundays. ' +
                         'Defaults to 0')
-    parser.add_argument('--max_exceptions', '-e', default=180, type=int,
-                        help='limits the days to parse trips for to service dates with a maximum number of exceptions.' +
-                        'This way irregular service times with a lot of exceptions can be filtered out. ' +
-                        'Defaults to 180 (more than half the year needs to be regular)')
     parser.add_argument('--nhosts', '-n', default='5', type=str,
                         help='sets the number of hosts that will be created in each host group.' +
                         'Use "auto" to determine the minimum number of hosts necessary to respect the whole schedule ' +
