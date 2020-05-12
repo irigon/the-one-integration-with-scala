@@ -1,0 +1,29 @@
+Scenario.name = freiburgSimplificado
+Scenario.nrofHostGroups = 2
+
+
+Group1.groupID = 1_
+Group1.movementModel = TransitMapMovement
+Group1.routeFile = data/freiburgSimplificado/1_stops.csv
+Group1.scheduleFile = data/freiburgSimplificado/1_schedule.csv
+Group1.routeType = 2
+Group1.nrofHosts = 2
+Group1.okMaps = 1
+
+
+Group2.groupID = S
+Group2.movementModel = StationaryMultiPointMovement
+Group2.stationarySystemNr = 1
+Group2.pointFile = data/freiburgSimplificado/stations.wkt
+Group2.nrofHosts = 22
+
+
+MapBasedMovement.nrofMapFiles = 1
+MapBasedMovement.mapFile1 = data/freiburgSimplificado/1_nodes.wkt
+
+Group.router = EpidemicRouter
+Events1.size = 1M
+btInterface.transmitSpeed = 1M
+
+MovementModel.worldSize = 7978, 7846
+Events1.hosts = 0,22

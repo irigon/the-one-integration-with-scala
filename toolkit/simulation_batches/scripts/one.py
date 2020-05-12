@@ -69,12 +69,10 @@ for item in dict_list:
         
 dict_list = [dict(t) for t in {tuple(d.items()) for d in dict_list}]
 
-#for i in dict_list:
-#    print(i.values())
 
-
-
+total   = len(dict_list)
 for scenario in scenario_list:
+    counter = 0
     # for each dic (item of the cartesian product)
     for entry in dict_list:
         scenario_name = scenario.split('_')[0]
@@ -147,5 +145,6 @@ for scenario in scenario_list:
         # backup configuration files
         backup_configuration_file(default_settings_file, end_name + "_default_settings")
         
+        print("Percent: {}/{}".format(counter,total))
         call(["./one.sh", "-b", "1", scenario])
 
