@@ -25,9 +25,9 @@ btInterface.transmitSpeed = 100M
 btInterface.transmitRange = 20
 
 # High speed, long range, interface for group 4
-highspeedInterface.type = SimpleBroadcastInterface
-highspeedInterface.transmitSpeed = 10M
-highspeedInterface.transmitRange = 200
+#highspeedInterface.type = SimpleBroadcastInterface
+#highspeedInterface.transmitSpeed = 10M
+#highspeedInterface.transmitRange = 200
 
 # Define 6 different node groups
 
@@ -96,7 +96,8 @@ MovementModel.warmup = 0
 ## Reports - all report names have to be valid report classes
 
 # how many reports to load
-Report.nrofReports = 1
+Report.nrofReports = 5
+Report.granularity = 60
 # length of the warm up period (simulated seconds)
 Report.warmup = 0
 # default directory of reports (can be overridden per Report with output setting)
@@ -104,6 +105,9 @@ Report.reportDir = reports/
 # Report classes to load
 Report.report1 = MessageStatsReport
 Report.report2 = ContactTimesReport
+Report.report3 = ContactsPerHourReport
+Report.report4 = CreatedMessagesReport
+Report.report5 = MessageDelayReport 
 
 ## Default settings for some routers settings
 ProphetRouter.secondsInTimeUnit = 30
