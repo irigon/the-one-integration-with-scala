@@ -295,9 +295,9 @@ public class TransitReader {
 		int index = 0;
 		
 		while (!currentNode.equals(endNode)) {
-			p.addWaypoint(currentNode.getLocation());
 
 			MapNode nextNode = orderedPath.get(index+1);
+			p.addWaypoint(nextNode.getLocation());
 			distance += getDistance(currentNode, nextNode);
 			// neighbor is nextStopNode
 			if (nextNode.equals(nextStopNode)) {
