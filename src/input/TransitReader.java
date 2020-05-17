@@ -277,6 +277,10 @@ public class TransitReader {
 	 * @param okMapType
 	 * 
 	 * Read the node order from file in order to ensure the order is respected
+	 * We need to create a path to p_forward and one to p_backwards, since they have different nodes.
+	 * p_forward starts at index 1 and ends at the next stop
+	 * p_backwards starts at departure station and end at the last node before next station,
+	 * this way, the backward direction will work the same as the forward one.
 	 */
 	
 	private void buildPaths() {
@@ -290,25 +294,33 @@ public class TransitReader {
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
         TransitWay p = new TransitWay();
+        TransitWay p_forward = new TransitWay();
+        TransitWay p_backward = new TransitWay();
 
-		//System.out.println("Stop No)de:" + currentNode.toString());
 		int index = 0;
 		
 		while (!currentNode.equals(endNode)) {
 
 			MapNode nextNode = orderedPath.get(index+1);
-			p.addWaypoint(nextNode.getLocation());
+			//p.addWaypoint(nextNode.getLocation());
+			p_forward.addWaypoint(nextNode.getLocation());
+			p_backward.addWaypoint(currentNode.getLocation());
 			distance += getDistance(currentNode, nextNode);
 			// neighbor is nextStopNode
 			if (nextNode.equals(nextStopNode)) {
-				p.setDuration(nextStop.timeTo());
-				p.setDistance(distance);
+				p_forward.setDuration(nextStop.timeTo());
+				p_forward.setDistance(distance);
+				p_backward.setDuration(nextStop.timeTo());
+				p_backward.setDistance(distance);
 
-				currentStop.setForward(p);
-				nextStop.setBackward(p.reversed());
+				//currentStop.setForward(p);
+				currentStop.setForward(p_forward);
+				
+				nextStop.setBackward(p_backward.reversed());
 
 				distance = 0;
-				p = new TransitWay();
+				p_forward = new TransitWay();
+				p_backward = new TransitWay();
 
 				if (!nextNode.equals(endNode)) {
 					currentStop = nextStop;
