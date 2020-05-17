@@ -1,0 +1,26 @@
+Scenario.name = alternativeRoutes
+Scenario.nrofHostGroups = 2
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/alternativeScenTest/stations.wkt
+Group1.nrofHosts = 4
+
+Group2.groupID = 1_
+Group2.movementModel = TransitMapMovement
+Group2.routeFile = data/alternativeScenTest/1_stops.csv
+Group2.scheduleFile = data/alternativeScenTest/1_schedule.csv
+Group2.routeType = 2
+Group2.nrofHosts = 1
+Group2.okMaps = 1
+
+MapBasedMovement.nrofMapFiles = 1
+MapBasedMovement.mapFile1 = data/alternativeScenTest/1_nodes.wkt
+
+Group.router = EpidemicRouter
+Events1.size = 1M
+btInterface.transmitSpeed = 1M
+
+MovementModel.worldSize = 500, 500
+Events1.hosts = 0,4
