@@ -75,7 +75,6 @@ for scenario in scenario_list:
     counter = 0
     # for each dic (item of the cartesian product)
     for entry in dict_list:
-        counter += 1
         scenario_name = scenario.split('_')[0]
         # ignore simulations that were performed
         #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
@@ -94,7 +93,7 @@ for scenario in scenario_list:
             entry['ProphetV2Router.gamma'],
             entry['btInterface.transmitSpeed'],
             entry['btInterface.transmitRange'],
-            entry['seed'],
+            entry['MovementModel.rngSeed'],
         )
         # scen config is used in the default configuration
         scen_config_name = name_var.format( 
