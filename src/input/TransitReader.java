@@ -294,33 +294,25 @@ public class TransitReader {
 		MapNode lastWayPoint = new MapNode(null);
 		double distance = 0;
         TransitWay p = new TransitWay();
-        TransitWay p_forward = new TransitWay();
-        TransitWay p_backward = new TransitWay();
 
 		int index = 0;
-		
 		while (!currentNode.equals(endNode)) {
-
+			p.addWaypoint(currentNode.getLocation());
 			MapNode nextNode = orderedPath.get(index+1);
-			//p.addWaypoint(nextNode.getLocation());
-			p_forward.addWaypoint(nextNode.getLocation());
-			p_backward.addWaypoint(currentNode.getLocation());
 			distance += getDistance(currentNode, nextNode);
 			// neighbor is nextStopNode
 			if (nextNode.equals(nextStopNode)) {
-				p_forward.setDuration(nextStop.timeTo());
-				p_forward.setDistance(distance);
-				p_backward.setDuration(nextStop.timeTo());
-				p_backward.setDistance(distance);
-
-				//currentStop.setForward(p);
-				currentStop.setForward(p_forward);
+				p.setDuration(nextStop.timeTo());
+				p.setDistance(distance);
 				
-				nextStop.setBackward(p_backward.reversed());
+				//currentStop.setForward(p);
+				p.addWaypoint(nextNode.getLocation());
+				currentStop.setForward(p);
+				
+				nextStop.setBackward(p.reversed());
 
 				distance = 0;
-				p_forward = new TransitWay();
-				p_backward = new TransitWay();
+				p = new TransitWay();
 
 				if (!nextNode.equals(endNode)) {
 					currentStop = nextStop;
