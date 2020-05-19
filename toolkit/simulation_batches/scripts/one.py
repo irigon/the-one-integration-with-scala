@@ -93,7 +93,7 @@ for scenario in scenario_list:
             entry['ProphetV2Router.gamma'],
             entry['btInterface.transmitSpeed'],
             entry['btInterface.transmitRange'],
-            entry['seed'],
+            entry['MovementModel.rngSeed'],
         )
         # scen config is used in the default configuration
         scen_config_name = name_var.format( 
