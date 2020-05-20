@@ -104,6 +104,7 @@ Report.outputGnuplot = true
 Report.onlyAverage = true
 Report.xCount = 100
 Report.yCount = 100
+Report.sampleInterval = 30
 # length of the warm up period (simulated seconds)
 Report.warmup = 0
 # default directory of reports (can be overridden per Report with output setting)
