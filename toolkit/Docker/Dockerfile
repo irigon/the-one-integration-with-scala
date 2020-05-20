@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y openssh-server \
     openjdk-11-jre-headless \
     default-jdk \
     tmux \
+    vim \
     git
 RUN mkdir /var/run/sshd
 RUN mkdir /root/.ssh
