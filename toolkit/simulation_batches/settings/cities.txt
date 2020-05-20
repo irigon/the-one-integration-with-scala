@@ -96,8 +96,14 @@ MovementModel.warmup = 0
 ## Reports - all report names have to be valid report classes
 
 # how many reports to load
-Report.nrofReports = 5
+Report.nrofReports = 9
 Report.granularity = 60
+Report.occupancyInterval = 60
+Report.outputGnuplot = true
+# DensityReport
+Report.onlyAverage = true
+Report.xCount = 100
+Report.yCount = 100
 # length of the warm up period (simulated seconds)
 Report.warmup = 0
 # default directory of reports (can be overridden per Report with output setting)
@@ -108,6 +114,11 @@ Report.report2 = ContactTimesReport
 Report.report3 = ContactsPerHourReport
 Report.report4 = CreatedMessagesReport
 Report.report5 = MessageDelayReport 
+Report.report6 = BufferOccupancyReport
+Report.report7 = DeliveredMessagesReport
+Report.report8 = MessageDeliveryReport
+Report.report9 = NodeDensityReport
+
 
 ## Default settings for some routers settings
 ProphetRouter.secondsInTimeUnit = 30
