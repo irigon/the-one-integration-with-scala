@@ -30,7 +30,7 @@ if (not options.dir):
 # Change to report directory
 os.chdir(options.dir)
 #file_list = os.listdir('./')
-file_list = glob.glob("*.txt")
+file_list = glob.glob("*MessageStatsReport.txt")
 
 
 
@@ -39,14 +39,14 @@ for i, f in enumerate(file_list):
     d_out = dict()
     # r_* = raw variable
     fname_variables = []
-    r_name, r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange,  _ = f.split('_')
+    r_name, r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, r_seed, _ = f.split('_')
 
     # change ',' in r_msize to '-'
     r_msize = '-'.join(r_msize.split(','))
     r_interval = '-'.join(r_interval.split(','))
     # add to the out dict the information contained in the file name
     d_out['Scenario'] = r_name
-    for var in [r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange]:
+    for var in [r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, r_seed]:
         k,v = var.split(':')
         d_out[k] = v
 
