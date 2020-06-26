@@ -302,7 +302,7 @@ public class TransitReader {
 			distance += getDistance(currentNode, nextNode);
 			// neighbor is nextStopNode
 			if (nextNode.equals(nextStopNode)) {
-				p.setDuration(nextStop.timeTo());
+				p.setDuration(currentStop.timeTo());
 				p.setDistance(distance);
 				
 				//currentStop.setForward(p);

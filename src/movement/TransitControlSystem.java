@@ -94,23 +94,6 @@ public class TransitControlSystem {
 		return trip;
 	}
 	
-//	private TransitTrip defaultTrip(int time) {
-//		if (r.nextBoolean()) {
-//			return new TransitTrip(
-//					time,
-//					stops.get(0),
-//					stops.get(stops.size()-1),
-//					TripDirection.FORWARD
-//			);
-//		}
-//		return new TransitTrip(
-//				time,
-//				stops.get(stops.size()-1),
-//				stops.get(0),
-//				TripDirection.BACKWARD
-//		);
-//	}
-
 	
 	/**
 	 * Based on the schedule, define the list of trips that each mobile device may serve.
