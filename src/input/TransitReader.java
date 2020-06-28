@@ -100,6 +100,11 @@ public class TransitReader {
 			TransitStop next = new TransitStop(
 					get_node(coords.get(0),	coords.get(1)), 
 					Integer.parseInt(line_fields.get(1)));
+			
+			// set long TransitStops with long wait, if any
+			if (line_fields.size() > 2) {
+				next.setExtendedWait(Double.parseDouble(line_fields.get(2)));
+			}
 
 			next.setPrev(previous);
 			if (previous != null) {
