@@ -1,11 +1,11 @@
 Scenario.name = regiaoSul
-Scenario.nrofHostGroups = 12
+Scenario.nrofHostGroups = 13
 
 Group1.groupID = S
 Group1.movementModel = StationaryMultiPointMovement
 Group1.stationarySystemNr = 1
 Group1.pointFile = data/regiaoSul/stations.wkt
-Group1.nrofHosts = 6
+Group1.nrofHosts = 13
 
 Group2.groupID = J.AG.PO.B
 Group2.movementModel = TransitMapMovement
@@ -95,7 +95,15 @@ Group12.routeType = 2
 Group12.nrofHosts = 2
 Group12.okMaps = 11 
 
-MapBasedMovement.nrofMapFiles = 11
+Group13.groupID = Ce.Pp.Fa.Pel
+Group13.movementModel = TransitMapMovement
+Group13.routeFile = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_stops.csv
+Group13.scheduleFile = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_schedule.csv
+Group13.routeType = 2 
+Group13.nrofHosts = 1
+Group13.okMaps = 12 
+
+MapBasedMovement.nrofMapFiles = 12
 MapBasedMovement.mapFile1 = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_nodes.wkt
 MapBasedMovement.mapFile2 = data/regiaoSul/JaguaraoArroioGrandePelotas_nodes.wkt
 MapBasedMovement.mapFile3 = data/regiaoSul/HervalArroioGrande_nodes.wkt
@@ -107,6 +115,7 @@ MapBasedMovement.mapFile8 = data/regiaoSul/PelotasPedroOsorioPiratini_nodes.wkt
 MapBasedMovement.mapFile9 = data/regiaoSul/PiratiniPinheiroMachadoviaJoaoSaraiva_nodes.wkt
 MapBasedMovement.mapFile10 = data/regiaoSul/CangucuPiratini_nodes.wkt
 MapBasedMovement.mapFile11 = data/regiaoSul/PiratiniPelotas_nodes.wkt
+MapBasedMovement.mapFile12 = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_nodes.wkt
 
 Group.waitTime = 300,900
 MovementModel.worldSize = 168000, 139000

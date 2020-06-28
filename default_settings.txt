@@ -9,7 +9,7 @@ Scenario.name = freiburg1True_router:%%Group.router%%_bSize:%%Group.bufferSize%%
 Scenario.simulateConnections = true
 Scenario.updateInterval = 0.1
 # 43200s == 12h
-Scenario.endTime = 64800
+Scenario.endTime = 604800
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
@@ -74,7 +74,7 @@ Events.nrof = 1
 Events1.class = MessageEventGenerator
 # (following settings are specific for the MessageEventGenerator class)
 # Creation interval in seconds (one new message every 25 to 35 seconds)
-Events1.interval = 1,5
+Events1.interval = 60
 # Message sizes (500kB - 100MB)
 Events1.size = 100k,100M
 # range of message source/destination addresses
