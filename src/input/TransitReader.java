@@ -250,9 +250,9 @@ public class TransitReader {
 		
 		int counter=0;
 		int len = coordList.size();
-		System.out.println("Reading path...");
+		//System.out.println("Reading path...");
 		for (Coord c: coordList) {
-			if ((counter++)%(len/10)==0) {System.out.print("*");}
+			//if ((counter++)%(len/10)==0) {System.out.print("*");}
 			updateCoordinate(map, c);
 			MapNode n = map.getNodeByCoord(c);
 			if (n != null) {
