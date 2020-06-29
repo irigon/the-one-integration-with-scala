@@ -200,12 +200,12 @@ public class TransitReader {
 	 */
 	TransitTrip getTripFromLine(String line) {
 		TransitTrip result_tt;
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd:mm:HH:mm:ss");
 		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
 
 		try {
-			timeStart = sdf.parse("00:00:00");
+			timeStart = sdf.parse("00:00:00:00:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -220,7 +220,7 @@ public class TransitReader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		int seconds = (int)(time.getTime() - timeStart.getTime()) / 1000;
+		int seconds = (int)((time.getTime() - timeStart.getTime()) / 1000);
 		int startIndex = Integer.parseInt(columns[1]);
 		int endIndex = Integer.parseInt(columns[2]);
 		TripDirection td = startIndex < endIndex ? TripDirection.FORWARD : TripDirection.BACKWARD;
@@ -248,7 +248,11 @@ public class TransitReader {
 			throw new SimError(e.toString(),e);
 		}
 		
+		int counter=0;
+		int len = coordList.size();
+		System.out.println("Reading path...");
 		for (Coord c: coordList) {
+			if ((counter++)%(len/10)==0) {System.out.print("*");}
 			updateCoordinate(map, c);
 			MapNode n = map.getNodeByCoord(c);
 			if (n != null) {
