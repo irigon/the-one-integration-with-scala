@@ -78,7 +78,7 @@ for scenario in scenario_list:
         counter += 1
         scenario_name = scenario.split('_')[0]
         # ignore simulations that were performed
-        #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
+        #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_Report.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
         name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}_tSpeed:{}_tRange:{}_seed:{}"
         end_name = name_var.format( # end_name is used to name the reports and output data
             scenario_name,
@@ -87,7 +87,7 @@ for scenario in scenario_list:
             entry['Group.msgTtl'],
             entry['Events1.size'],
             entry['Scenario.endTime'],
-            entry['MovementModel.warmup'],
+            entry['Report.warmup'],
             entry['Events1.interval'],
             entry['Scenario.updateInterval'],
             entry['ProphetV2Router.beta'],
@@ -104,7 +104,7 @@ for scenario in scenario_list:
             "%%Group.msgTtl%%",
             "%%Events1.size%%",
             "%%Scenario.endTime%%",
-            "%%MovementModel.warmup%%",
+            "%%Report.warmup%%",
             "%%Events1.interval%%",
             "%%Scenario.updateInterval%%",
             "%%ProphetV2Router.beta%%",
