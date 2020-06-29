@@ -1,4 +1,4 @@
-Scenario.name = regiaoSul
+#Scenario.name = regiaoSul
 Scenario.nrofHostGroups = 15
 
 Group1.groupID = S
