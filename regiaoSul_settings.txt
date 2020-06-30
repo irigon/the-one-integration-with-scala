@@ -134,5 +134,5 @@ MapBasedMovement.mapFile13 = data/regiaoSul/PelotasCangucu_nodes.wkt
 
 Group.waitTime = 30,50
 MovementModel.worldSize = 168000, 139000
-Events1.hosts = 0,2
+Events1.hosts = 0,8
 
