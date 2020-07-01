@@ -204,8 +204,9 @@ public class TransitReader {
 		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
 
+		// default time, 01.06.2020, Monday
 		try {
-			timeStart = sdf.parse("00:00:00:00:00");
+			timeStart = sdf.parse("01:06:00:00:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
