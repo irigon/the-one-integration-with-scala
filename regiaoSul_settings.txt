@@ -17,7 +17,7 @@ Group3.groupID = J.AG.PO.B
 Group3.movementModel = TransitMapMovement
 Group3.routeFile = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_stops.csv
 Group3.scheduleFile = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_schedule.csv
-Group3.routeType = 2 
+Group3.routeType = 1 
 Group3.nrofHosts = 1
 Group3.okMaps = 1
 
@@ -26,7 +26,7 @@ Group4.movementModel = TransitMapMovement
 Group4.routeFile = data/regiaoSul/JaguaraoArroioGrandePelotas_stops.csv
 Group4.scheduleFile = data/regiaoSul/JaguaraoArroioGrandePelotas_schedule.csv
 Group4.routeType = 2 
-Group4.nrofHosts = 5
+Group4.nrofHosts = 4
 Group4.okMaps = 2 
 
 Group5.groupID = H.AG
@@ -34,7 +34,7 @@ Group5.movementModel = TransitMapMovement
 Group5.routeFile = data/regiaoSul/HervalArroioGrande_stops.csv
 Group5.scheduleFile = data/regiaoSul/HervalArroioGrande_schedule.csv
 Group5.routeType = 2 
-Group5.nrofHosts = 2
+Group5.nrofHosts = 1
 Group5.okMaps = 3 
 
 Group6.groupID = H.PO.Pel
@@ -98,7 +98,7 @@ Group13.movementModel = TransitMapMovement
 Group13.routeFile = data/regiaoSul/PiratiniPelotas_stops.csv
 Group13.scheduleFile = data/regiaoSul/PiratiniPelotas_schedule.csv
 Group13.routeType = 2 
-Group13.nrofHosts = 4
+Group13.nrofHosts = 2
 Group13.okMaps = 11 
 
 Group14.groupID = Ce.Pp.Fa.Pel
@@ -114,7 +114,7 @@ Group15.movementModel = TransitMapMovement
 Group15.routeFile = data/regiaoSul/PelotasCangucu_stops.csv
 Group15.scheduleFile = data/regiaoSul/PelotasCangucu_schedule.csv
 Group15.routeType = 2 
-Group15.nrofHosts = 4
+Group15.nrofHosts = 2
 Group15.okMaps = 13 
 
 MapBasedMovement.nrofMapFiles = 13

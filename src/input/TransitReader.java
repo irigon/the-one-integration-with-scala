@@ -200,7 +200,7 @@ public class TransitReader {
 	 */
 	TransitTrip getTripFromLine(String line) {
 		TransitTrip result_tt;
-		SimpleDateFormat sdf = new SimpleDateFormat("dd:mm:HH:mm:ss");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:HH:mm:ss");
 		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
 

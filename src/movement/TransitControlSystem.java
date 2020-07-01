@@ -105,7 +105,6 @@ public class TransitControlSystem {
 
 	    //System.out.println("Calculating devices per trip: ");
 	    while (!schedule_copy.isEmpty()) {
-	    	tripsPerMobile.add(new LinkedList<TransitTrip>());
 	    	serve_trips_with_mobile(device_int_id, schedule_copy);
 		    device_int_id++;
 		    //System.out.print("*");	    
@@ -127,6 +126,7 @@ public class TransitControlSystem {
 	    int depart_after;
 		TransitStop depart_from;
 		
+    	tripsPerMobile.add(new LinkedList<TransitTrip>());
 		// get the first trip	
 		// TODO: after testing, use the original schedule
 		TransitTrip currentTrip = pop_from_schedule(-1, null, schedule_copy);
