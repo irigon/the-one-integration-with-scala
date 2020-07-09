@@ -1,5 +1,6 @@
 from optparse import OptionParser
 import glob, os
+from collections import OrderedDict
 
 
 
@@ -32,34 +33,37 @@ os.chdir(options.dir)
 #file_list = os.listdir('./')
 file_list = glob.glob("*MessageStatsReport.txt")
 
-
+def update_dic(dic, variables):
+    for var in variables:
+        k,v = var.split(':')
+        dic[k] = v
 
 #print(options, args, file_list)
 for i, f in enumerate(file_list):
-    d_out = dict()
+
+    d_out = OrderedDict()
+    for key in ['Scenario', 'router', 'bSize', 'Ttl', 'Events1.size', 'endTime', 'warmup', 'Events1.interval', 'updateInt', 'tSpeed', 'tRange', 'seed', 'beta', 'gamma', 'SaWbin', 'SaWcp']:
+        d_out[key] = 'None'
+
     # r_* = raw variable
     fname_variables = []
-    variables = f.split('_') 
-    #print(variables)
-    r_saw = 'SaWcp:x'
-    r_bin = 'SaWbin:x'
-    if len(variables) == 15:
-        r_name, r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, r_seed, _ = variables
-    elif len(variables) == 17:
-        r_name, r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, r_seed, r_bin, r_saw, _ = variables
-    elif len(variables) == 14: # cgr
-        r_name, r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, _ = variables
+    variables = f.split('_')
+
+    for idx,v in enumerate(variables):
+        if ',' in v:
+            variables[idx] = '-'.join(v.split(','))
 
 
-    # change ',' in r_msize to '-'
-    r_msize = '-'.join(r_msize.split(','))
-    r_interval = '-'.join(r_interval.split(','))
     # add to the out dict the information contained in the file name
-    d_out['Scenario'] = r_name
-    for var in [r_router, r_buffer, r_ttl, r_msize, r_endtime, r_warmup, r_interval, u_interval, r_beta, r_gamma, r_tspeed, r_trange, r_seed, r_saw, r_bin]:
-        k,v = var.split(':')
-        d_out[k] = v
+    d_out['Scenario'] = variables[0]
+    update_dic(d_out, variables[1:12])
 
+    get_value = lambda x : x.split(':')[1]
+
+    if d_out['router']== 'SprayAndWaitRouter':
+        update_dic(d_out, variables[12:14])
+    elif d_out['router']== 'ProphetV2Router':
+        update_dic(d_out, variables[12:14])
 
     # Read file contents
     with open(f, 'r') as fd:
