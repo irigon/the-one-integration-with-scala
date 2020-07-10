@@ -11,17 +11,12 @@ from pathlib import Path
 
 # The goal of this script is to automate the simulations in the-ONE
 
-#the_one_path = "/home/lento/eclipse-workspace-new/the-one-transit/"
-#the_one_path = "/home/simulant/Simulation/the-one-transit/"
-
 config = ConfigParser()
 config.read('defaults.cfg')
 
 the_one_path = config.get('path', 'the_one_path')
 THE_ONE_SCRIPTS = the_one_path + "toolkit/simulation_batches/"
 settings_dir = THE_ONE_SCRIPTS + "settings/"
-
-
 
 parser = OptionParser()
 parser.add_option("-i", "--input", dest="opt_input",
@@ -30,15 +25,34 @@ parser.add_option("-d", "--defaults", dest="defaults_file",
                   help="configuration file")
 parser.add_option("-s", "--scenario", dest="scenario_desc", type=str,
                   help="scenario description")
+parser.add_option("--dry-run", action='store_true', dest="dry_run")
+
 
 (options, args) = parser.parse_args()
 
+PROPHET_EXCLUSIVE_FIELDS=['ProphetV2Router.beta', 'ProphetV2Router.gamma']
+SPRAYANDWAIT_EXCLUSIVE_FIELDS=['SprayAndWaitRouter.nrofCopies', 'SprayAndWaitRouter.binaryMode']
 
 def backup_configuration_file(default_config, config_name):
     os.chdir(the_one_path)
     Path("reports_configuration").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(default_config, 'reports_configuration/' + config_name)
 
+def get_template(router):
+    template = "{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_tSpeed:{}_tRange:{}_seed:{}"
+    if router == 'ProphetV2Router':
+        template += '_beta:{}_gamma:{}'
+    elif router == 'SprayAndWaitRouter':
+        template += '_SaWbin:{}_SaWcp:{}'
+    return template
+
+def extended_variable_list(d):
+    l =  ['Group.router','Group.bufferSize','Group.msgTtl','Events1.size','Scenario.endTime','Report.warmup','Events1.interval','Scenario.updateInterval','btInterface.transmitSpeed','btInterface.transmitRange','MovementModel.rngSeed']
+    if d['Group.router'] == 'ProphetV2Router':
+        l.extend(PROPHET_EXCLUSIVE_FIELDS)
+    if d['Group.router'] == 'SprayAndWaitRouter':
+        l.extend(SPRAYANDWAIT_EXCLUSIVE_FIELDS)
+    return l
 
 os.chdir(the_one_path)
 dst_config = settings_dir + "tmp.txt"
@@ -52,23 +66,27 @@ dic = st.read_config(script_path)
 
 # return a list of dicts from the cartesian product of dic values
 dict_list = st.product(dic)
+ONE_variable = ['Group.router','Group.bufferSize','Group.msgTtl','Events1.size','Scenario.endTime','Report.warmup','Events1.interval','Scenario.updateInterval','btInterface.transmitSpeed','btInterface.transmitRange','MovementModel.rngSeed']
 
-# set default values for variable specific (e.g. PRoPHET), overwriting the product.
-# This creates several repeated entries, that will be elimiated next.
-# e.g. sprayAndWait routing with PRoPHET.gamma=0.1 and PRoPHET.gamma=0.2 are united to
-# PRoPHET.gamma=default_value, since SprayAndWait do not care about PRoPHET.gamma
-#PRoPHET_vars=[x for x in dic.keys() if x.startswith('ProphetV2Router')]
-# public static final double DEFAULT_GAMMA = 0.999885791;
-default_gamma='0.999885791'
-# public static final double DEFAULT_BETA = 0.9;
-default_beta='0.9'
+
 for item in dict_list:
     if item['Group.router'] != 'ProphetV2Router':
-        item['ProphetV2Router.beta']=default_beta
-        item['ProphetV2Router.gamma']=default_gamma 
-        
+        for i in PROPHET_EXCLUSIVE_FIELDS:
+            item.pop(i, None)
+    if item['Group.router'] != 'SprayAndWaitRouter':
+        for i in SPRAYANDWAIT_EXCLUSIVE_FIELDS:
+            item.pop(i, None)
+
+
 dict_list = [dict(t) for t in {tuple(d.items()) for d in dict_list}]
 
+''' Create the output file name
+'''
+def get_end_name(scenario_name, variable_list, fn):
+    list_of_values = [scenario_name]
+    list_of_values.extend([fn(x) for x in variable_list])
+    template = get_template(fn('Group.router'))
+    return template.format(*list_of_values)
 
 total   = len(dict_list)
 for scenario in scenario_list:
@@ -77,42 +95,22 @@ for scenario in scenario_list:
     for entry in dict_list:
         counter += 1
         scenario_name = scenario.split('_')[0]
-        # ignore simulations that were performed
-        #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_Report.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
-        name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}_tSpeed:{}_tRange:{}_seed:{}"
-        end_name = name_var.format( # end_name is used to name the reports and output data
-            scenario_name,
-            entry['Group.router'],
-            entry['Group.bufferSize'],
-            entry['Group.msgTtl'],
-            entry['Events1.size'],
-            entry['Scenario.endTime'],
-            entry['Report.warmup'],
-            entry['Events1.interval'],
-            entry['Scenario.updateInterval'],
-            entry['ProphetV2Router.beta'],
-            entry['ProphetV2Router.gamma'],
-            entry['btInterface.transmitSpeed'],
-            entry['btInterface.transmitRange'],
-            entry['MovementModel.rngSeed'],
-        )
-        # scen config is used in the default configuration
-        scen_config_name = name_var.format( 
-            scenario_name,
-            "%%Group.router%%",
-            "%%Group.bufferSize%%",
-            "%%Group.msgTtl%%",
-            "%%Events1.size%%",
-            "%%Scenario.endTime%%",
-            "%%Report.warmup%%",
-            "%%Events1.interval%%",
-            "%%Scenario.updateInterval%%",
-            "%%ProphetV2Router.beta%%",
-            "%%ProphetV2Router.gamma%%",
-            "%%btInterface.transmitSpeed%%",
-            "%%btInterface.transmitRange%%",
-            "%%MovementModel.rngSeed%%",
-        )
+
+        # function that gets the respective entry for a name
+        variable_list = extended_variable_list(entry)
+        name_from_dict = lambda x: entry[x]
+
+        template = get_template(entry['Group.router'])
+
+        # end_name: name of the file in reports
+        list_of_values = [scenario_name]
+        list_of_values.extend([name_from_dict(x) for x in variable_list])
+        end_name = template.format(*list_of_values)
+
+        # Config name --> format of Scenario.name in default_settings.
+        ONE_name = lambda x: '%%{}%%'.format(x)
+        scen_config_name = template.format(scenario_name, *[ONE_name(x) for x in variable_list])
+        scen_config_name = scen_config_name.format('')
 
 
         report_name = the_one_path + "reports/" + end_name + "_MessageStatsReport.txt"
@@ -122,6 +120,12 @@ for scenario in scenario_list:
         else:
             print(report_name + " does not exist. Simulating...")
 
+        if options.dry_run:
+            print("Dry-run concluded, exiting...")
+            continue
+
+        # touch: create the status file empty to let another process to know that this has been taken
+        open(report_name, 'a').close()
 
         # copia para default_settings
         shutil.copyfile(defaults, default_settings_file)
