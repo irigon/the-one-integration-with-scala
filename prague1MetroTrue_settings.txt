@@ -13,7 +13,7 @@ Group2.movementModel = TransitMapMovement
 Group2.routeFile = data/prague1MetroTrue/A_stops.csv
 Group2.scheduleFile = data/prague1MetroTrue/A_schedule.csv
 Group2.routeType = 2
-Group2.nrofHosts = 32
+Group2.nrofHosts = 31
 Group2.okMaps = 1
 
 
@@ -22,7 +22,7 @@ Group3.movementModel = TransitMapMovement
 Group3.routeFile = data/prague1MetroTrue/B_stops.csv
 Group3.scheduleFile = data/prague1MetroTrue/B_schedule.csv
 Group3.routeType = 2
-Group3.nrofHosts = 31
+Group3.nrofHosts = 30
 Group3.okMaps = 2
 
 
