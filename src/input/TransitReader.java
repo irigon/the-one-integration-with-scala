@@ -100,6 +100,11 @@ public class TransitReader {
 			TransitStop next = new TransitStop(
 					get_node(coords.get(0),	coords.get(1)), 
 					Integer.parseInt(line_fields.get(1)));
+			
+			// set long TransitStops with long wait, if any
+			if (line_fields.size() > 2) {
+				next.setExtendedWait(Double.parseDouble(line_fields.get(2)));
+			}
 
 			next.setPrev(previous);
 			if (previous != null) {
@@ -195,12 +200,13 @@ public class TransitReader {
 	 */
 	TransitTrip getTripFromLine(String line) {
 		TransitTrip result_tt;
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:HH:mm:ss");
 		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
 
+		// default time, 01.06.2020, Monday
 		try {
-			timeStart = sdf.parse("00:00:00");
+			timeStart = sdf.parse("01:06:00:00:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -215,7 +221,7 @@ public class TransitReader {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		int seconds = (int)(time.getTime() - timeStart.getTime()) / 1000;
+		int seconds = (int)((time.getTime() - timeStart.getTime()) / 1000);
 		int startIndex = Integer.parseInt(columns[1]);
 		int endIndex = Integer.parseInt(columns[2]);
 		TripDirection td = startIndex < endIndex ? TripDirection.FORWARD : TripDirection.BACKWARD;
@@ -243,7 +249,11 @@ public class TransitReader {
 			throw new SimError(e.toString(),e);
 		}
 		
+		int counter=0;
+		int len = coordList.size();
+		//System.out.println("Reading path...");
 		for (Coord c: coordList) {
+			//if ((counter++)%(len/10)==0) {System.out.print("*");}
 			updateCoordinate(map, c);
 			MapNode n = map.getNodeByCoord(c);
 			if (n != null) {
@@ -302,7 +312,7 @@ public class TransitReader {
 			distance += getDistance(currentNode, nextNode);
 			// neighbor is nextStopNode
 			if (nextNode.equals(nextStopNode)) {
-				p.setDuration(nextStop.timeTo());
+				p.setDuration(currentStop.timeTo());
 				p.setDistance(distance);
 				
 				//currentStop.setForward(p);

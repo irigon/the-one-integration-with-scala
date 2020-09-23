@@ -36,7 +36,7 @@ def calculate_trip_duration(depart_idx, end_idx, stations_info):
 #   {datetime departure, last_station_idx, duration in seconds}
 def format_trip(trip_line):
     arrival_str, depart_idx, end_idx = trip_line.split(",")
-    arrival_date = datetime.datetime.strptime(arrival_str, "%H:%M:%S")
+    arrival_date = datetime.datetime.strptime(arrival_str, "%d:%m:%H:%M:%S")
     duration = calculate_trip_duration(int(depart_idx), int(end_idx), stations_info)
     return {"arrival":arrival_date, "ini_station": int(depart_idx), "last_station":int(end_idx), "duration":duration}
 

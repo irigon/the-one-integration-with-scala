@@ -74,10 +74,10 @@ public class TransitTrip {
     		sum += ts.timeTo(); 		
     		ts = (direction == TripDirection.FORWARD) ? ts.getNext(): ts.getPrev();
     	} 
-
-    	
     	sum += ts.timeTo() + getStartTime();
     	//System.out.println("Device departing at " + getStartTime() + " arrives at " + sum);
     	return sum;
     }
+    
+    
 }

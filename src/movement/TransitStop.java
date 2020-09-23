@@ -11,10 +11,12 @@ public class TransitStop {
     private TransitStop prev;
     private TransitWay forward;
     private TransitWay backward;
+    private double extendedWait;
 
     public TransitStop(MapNode node, int timeTo) {
         this.node = node;
         this.timeTo = timeTo;
+        this.extendedWait = 0.0;
     }
 
     public boolean equals(TransitStop s) {
@@ -69,5 +71,18 @@ public class TransitStop {
     static public TransitStop dummy() {
     	MapNode mn = new MapNode(new Coord(0,0));
     	return new TransitStop(mn, 0);
+    }
+    
+    /**
+     * In long distance bus connections, it is common that, after some hours, the bus
+     * stops for longer periods of time. This period is set directly in the stop file
+     * @param waitTime
+     */
+    public void setExtendedWait(double waitTime) {
+    	this.extendedWait = waitTime;
+    }
+    
+    public double extendedWait() {
+    	return this.extendedWait;
     }
 }

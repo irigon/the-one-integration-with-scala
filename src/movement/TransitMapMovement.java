@@ -100,7 +100,14 @@ public class TransitMapMovement extends MapBasedMovement implements
 				return Double.MAX_VALUE;
 			return currentTrip.getStartTime();
 		}
-		waitTime = generateWaitTime();
+		// if located in long duration stop: generateWaitTimeLongDuration()
+		//TODO: add some random error
+		if (currentTrip.getCurrentStop().extendedWait() > 0.0) {
+			waitTime = currentTrip.getCurrentStop().extendedWait();
+		} else {
+			waitTime = generateWaitTime();
+		}
+		// else: generateWaitTime() // time to pickUp passengers
 		return SimClock.getTime() + waitTime;
 	}
 

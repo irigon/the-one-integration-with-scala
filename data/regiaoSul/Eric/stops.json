@@ -1,0 +1,230 @@
+[
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.512403,
+      -31.868561
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.180204,
+      -31.464436
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.871595,
+      -31.956868
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.834517,
+      -31.729593
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.791532,
+      -31.353468
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.675004,
+      -31.851127
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.643772,
+      -31.885771
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.538301,
+      -31.574929
+    ],
+    "color": [
+      0,
+      255,
+      255
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -54.106236,
+      -31.331718
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.585572,
+      -31.732389
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.395237,
+      -32.025773
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.376976,
+      -32.566474
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.38228,
+      -31.578983
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.104176,
+      -31.448516
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -53.086325,
+      -32.238502
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.821823,
+      -31.861731
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.815038,
+      -31.854553
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.677099,
+      -31.398296
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "stop name",
+    "coordinates": [
+      -52.357408,
+      -31.756258
+    ],
+    "color": [
+      255,
+      0,
+      0
+    ]
+  }
+]

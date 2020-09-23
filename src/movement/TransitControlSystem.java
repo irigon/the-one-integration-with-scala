@@ -94,23 +94,6 @@ public class TransitControlSystem {
 		return trip;
 	}
 	
-//	private TransitTrip defaultTrip(int time) {
-//		if (r.nextBoolean()) {
-//			return new TransitTrip(
-//					time,
-//					stops.get(0),
-//					stops.get(stops.size()-1),
-//					TripDirection.FORWARD
-//			);
-//		}
-//		return new TransitTrip(
-//				time,
-//				stops.get(stops.size()-1),
-//				stops.get(0),
-//				TripDirection.BACKWARD
-//		);
-//	}
-
 	
 	/**
 	 * Based on the schedule, define the list of trips that each mobile device may serve.
@@ -120,10 +103,11 @@ public class TransitControlSystem {
 	    TreeMap<Integer, ArrayList<TransitTrip>> schedule_copy = (TreeMap<Integer, ArrayList<TransitTrip>>) schedule.clone();
 	    int device_int_id = 0;
 
+	    //System.out.println("Calculating devices per trip: ");
 	    while (!schedule_copy.isEmpty()) {
-	    	tripsPerMobile.add(new LinkedList<TransitTrip>());
 	    	serve_trips_with_mobile(device_int_id, schedule_copy);
 		    device_int_id++;
+		    //System.out.print("*");	    
 	    }	
 	    return device_int_id;
 	}
@@ -142,6 +126,7 @@ public class TransitControlSystem {
 	    int depart_after;
 		TransitStop depart_from;
 		
+    	tripsPerMobile.add(new LinkedList<TransitTrip>());
 		// get the first trip	
 		// TODO: after testing, use the original schedule
 		TransitTrip currentTrip = pop_from_schedule(-1, null, schedule_copy);
