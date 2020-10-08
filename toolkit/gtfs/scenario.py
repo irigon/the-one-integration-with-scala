@@ -151,7 +151,7 @@ def main(args):
         # write the schedule of this line
         # (start times, start and stop ids and direction)
         writer.write_csv_schedule(
-            schedule=[('1:06:'+s[0],s[1],s[2]) for s in  schedule.get('1')],
+            schedule=[('1:06:'+s[0],s[1],s[2]) for s in  schedule.get(r.name)],
             file=schedule_file.format(name)
         )
 
