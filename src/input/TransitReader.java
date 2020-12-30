@@ -193,6 +193,68 @@ public class TransitReader {
 		return schedule;
 	}
 	
+	public void extendSchedule(TreeMap<Integer, ArrayList<TransitTrip>> schedule, String filename, List<TransitStop> alt_stops) {
+
+		TransitTrip tr_curr_line;
+		int depart_time;
+
+		List<String> line_list = new ArrayList<String>();
+		try (Stream<String> lines = Files.lines(Paths.get(filename))) {
+			line_list = lines.collect(Collectors.toList());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		for (String line: line_list) {
+			tr_curr_line = getTripFromLine(line, alt_stops);
+			depart_time = tr_curr_line.getStartTime();
+
+			// if key not in map, add list
+			if (schedule.get(depart_time) == null) {
+				schedule.put(depart_time, new ArrayList<TransitTrip>());
+			}
+			
+			schedule.get(depart_time).add(tr_curr_line);
+		}
+		
+	}
+
+	/**
+	 * TODO Cleanup -- testing class
+	 * @param line
+	 * @return
+	 */
+	TransitTrip getTripFromLine(String line, List<TransitStop> alt_stops) {
+		TransitTrip result_tt;
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String[] columns = line.split(COMMA_DELIMITER);
+		Date timeStart = null;
+
+		try {
+			timeStart = sdf.parse("00:00:00");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		if (columns.length != 3) {
+			throw new SettingsError("Malformed schedule file supplied, needs 3 columns.");
+		}
+
+		Date time = null;
+		try {
+			time = sdf.parse(columns[0]);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		int seconds = (int)(time.getTime() - timeStart.getTime()) / 1000;
+		int startIndex = Integer.parseInt(columns[1]);
+		int endIndex = Integer.parseInt(columns[2]);
+		TripDirection td = startIndex < endIndex ? TripDirection.FORWARD : TripDirection.BACKWARD;
+		
+		return (new TransitTrip(seconds, alt_stops.get(startIndex), alt_stops.get(endIndex), td));
+	}
+	
 	/**
 	 * Transform the line input into a TransitTrip 
 	 * @param line read from file
@@ -335,6 +397,7 @@ public class TransitReader {
 			currentNode = nextNode;
 			index += 1;
 		}
+		System.out.println("Done");
 	}
 	
 	private double getDistance(MapNode n1, MapNode n2) {

@@ -1,5 +1,6 @@
 package movement;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -17,13 +18,9 @@ import movement.map.SimMap;
 public class TransitControlSystem {
 
 	private short routeType;
-    private List<TransitStop> stops;
     private volatile TreeMap<Integer, ArrayList<TransitTrip>> schedule;
-
-    // tripsPerMobile[mobileId][departure times]
     private ArrayList<LinkedList<TransitTrip>> tripsPerMobile = new ArrayList<LinkedList<TransitTrip>>();
     private Random r;
-    private TransitReader t_reader;
     private int device_id;
     String scheduleFile;
 
@@ -36,14 +33,25 @@ public class TransitControlSystem {
 
     private final String COMMA_DELIMITER = ",";
 
+    private boolean exists_alternative_path(String stopsFile, String scheduleFile, String nodesFile) {
+    	String posfix = "_alt";
+    	File stopsAlt = new File(stopsFile + posfix);
+    	File scheduleAlt = new File(scheduleFile + posfix);
+    	File nodesAlt = new File(nodesFile + posfix);
+		
+    	return (stopsAlt.exists() && scheduleAlt.exists() && nodesAlt.exists());
+    }
+    
 	/**
 	 * Creates a new movement model based on a Settings object's settings.
 	 */
 	public TransitControlSystem(String stopsFile, String scheduleFile, String nodesFile, SimMap map, long okMapType) {
+	    List<TransitStop> stops;
+	    TransitReader t_reader;
 		int num_vehicles=0;
 		this.scheduleFile = scheduleFile;
-		this.t_reader = new TransitReader(stopsFile, scheduleFile, nodesFile, map, okMapType);
-		stops = this.t_reader.getStops();
+		t_reader = new TransitReader(stopsFile, scheduleFile, nodesFile, map, okMapType);
+		stops = t_reader.getStops();
 		TransitStop start = stops.get(0);
 		TransitStop end = stops.get(stops.size() - 1); 
 
@@ -54,7 +62,20 @@ public class TransitControlSystem {
         }
 
 		// read schedule (s) and alternatives to the schedule list
-        schedule = this.t_reader.readSchedule();
+        schedule = t_reader.readSchedule();
+        
+        // If an alternative route exists, extend the schedule with alternative route
+        if (exists_alternative_path(stopsFile, scheduleFile, nodesFile)) {
+    	    List<TransitStop> stops_alt;
+        	TransitReader t_reader_alt = new TransitReader(stopsFile + "_alt", scheduleFile + "_alt", nodesFile + "_alt", map, okMapType);
+    		stops_alt = t_reader_alt.getStops();
+    		// TODO: relax this assumption and allow any alternative route that have the first and last station within the reference trip
+    		assert (stops.get(0).equals(stops_alt.get(0)));
+    		assert (stops.get(stops.size() - 1).equals(stops_alt.get(stops.size() - 1)));
+            t_reader.extendSchedule(schedule, scheduleFile + "_alt", stops_alt);
+        }
+        
+        
         num_vehicles = setTripsPerVehicle();
         System.out.println(num_vehicles + " in line defined by file " + scheduleFile);
         
@@ -93,7 +114,6 @@ public class TransitControlSystem {
     	assert (currentStop.node.getLocation().equals(trip.startLocation()));
 		return trip;
 	}
-	
 	
 	/**
 	 * Based on the schedule, define the list of trips that each mobile device may serve.

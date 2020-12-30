@@ -16,7 +16,7 @@ import input.TransitReader;
 import movement.TransitControlSystem;
 import movement.TransitTrip;
 
-class TransitTripTest {
+class TransitAdaptiveTest {
 	private TestSettings s;
 	private SimScenario scen;
 	private World world;
@@ -33,9 +33,9 @@ class TransitTripTest {
     @BeforeEach
 	public void setUp() throws Exception {
 		s = new TestSettings();
-		s.setNameSpace("Group1");
+		s.setNameSpace("Group2");
 		s.setSecondaryNamespace("Group");
-		Settings.addSettings("test_configurations/default_settings.txt");
+		Settings.addSettings("test_configurations/transit_default_settings.txt");
 	}
 
     public Collection<ArrayList<TransitTrip>> get_trip_lists(String conf_file) {
@@ -63,7 +63,7 @@ class TransitTripTest {
 	@Test
 	void testTripTime1() {
 		Collection<ArrayList<TransitTrip>> tripLists;
-        tripLists = get_trip_lists("test_configurations/trip_tests/settings1.txt");
+        tripLists = get_trip_lists("test_configurations/trip_tests/settings_adaptive.txt");
         int counter = 0;
         ArrayList<Integer> results = new ArrayList<Integer>();
         

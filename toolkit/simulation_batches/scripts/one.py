@@ -95,22 +95,42 @@ for scenario in scenario_list:
     for entry in dict_list:
         counter += 1
         scenario_name = scenario.split('_')[0]
-
-        # function that gets the respective entry for a name
-        variable_list = extended_variable_list(entry)
-        name_from_dict = lambda x: entry[x]
-
-        template = get_template(entry['Group.router'])
-
-        # end_name: name of the file in reports
-        list_of_values = [scenario_name]
-        list_of_values.extend([name_from_dict(x) for x in variable_list])
-        end_name = template.format(*list_of_values)
-
-        # Config name --> format of Scenario.name in default_settings.
-        ONE_name = lambda x: '%%{}%%'.format(x)
-        scen_config_name = template.format(scenario_name, *[ONE_name(x) for x in variable_list])
-        scen_config_name = scen_config_name.format('')
+        # ignore simulations that were performed
+        #report_name = "{}_Group.router:{}_Group.bufferSize:{}_Group.msgTtl:{}_Events1.size:{}_Scenario.endTime:{}_MovementModel.warmup:{}_Events1.interval:{}_Scenario.updateInterval:{}_MessageStatsReport.txt".format(
+        name_var="{}_router:{}_bSize:{}_Ttl:{}_Events1.size:{}_endTime:{}_warmup:{}_Events1.interval:{}_updateInt:{}_beta:{}_gamma:{}_tSpeed:{}_tRange:{}_seed:{}"
+        end_name = name_var.format( # end_name is used to name the reports and output data
+            scenario_name,
+            entry['Group.router'],
+            entry['Group.bufferSize'],
+            entry['Group.msgTtl'],
+            entry['Events1.size'],
+            entry['Scenario.endTime'],
+            entry['MovementModel.warmup'],
+            entry['Events1.interval'],
+            entry['Scenario.updateInterval'],
+            entry['ProphetV2Router.beta'],
+            entry['ProphetV2Router.gamma'],
+            entry['btInterface.transmitSpeed'],
+            entry['btInterface.transmitRange'],
+            entry['MovementModel.rngSeed'],
+        )
+        # scen config is used in the default configuration
+        scen_config_name = name_var.format( 
+            scenario_name,
+            "%%Group.router%%",
+            "%%Group.bufferSize%%",
+            "%%Group.msgTtl%%",
+            "%%Events1.size%%",
+            "%%Scenario.endTime%%",
+            "%%MovementModel.warmup%%",
+            "%%Events1.interval%%",
+            "%%Scenario.updateInterval%%",
+            "%%ProphetV2Router.beta%%",
+            "%%ProphetV2Router.gamma%%",
+            "%%btInterface.transmitSpeed%%",
+            "%%btInterface.transmitRange%%",
+            "%%MovementModel.rngSeed%%",
+        )
 
 
         report_name = the_one_path + "reports/" + end_name + "_MessageStatsReport.txt"
