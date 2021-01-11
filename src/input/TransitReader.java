@@ -227,12 +227,12 @@ public class TransitReader {
 	 */
 	TransitTrip getTripFromLine(String line, List<TransitStop> alt_stops) {
 		TransitTrip result_tt;
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:HH:mm:ss");
 		String[] columns = line.split(COMMA_DELIMITER);
 		Date timeStart = null;
 
 		try {
-			timeStart = sdf.parse("00:00:00");
+			timeStart = sdf.parse("01:06:00:00:00");
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
