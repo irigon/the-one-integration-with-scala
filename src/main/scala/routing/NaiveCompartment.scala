@@ -1,6 +1,9 @@
 package routing
 
 import scroll.internal._
+import core.Message, core.DTNHost
+import java.util.HashMap
+import java.util.ArrayList
 
 class NaiveCompartment extends AbstractCompartment{
 
@@ -8,15 +11,15 @@ class NaiveCompartment extends AbstractCompartment{
 
     class NaiveAlgorithmB {
         def algo_name() : String = { "Algorithm A" }
-        def route(msg : String) : String = {
-            "Routing " + msg + " with " + algo_name() + " in " + compartment_name();
+        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.ArrayList[DTNHost] = {
+            new java.util.ArrayList[DTNHost](0);
         }
     }
 
     class NaiveAlgorithmA {
-        def algo_name() : String = { "NaiveAlgorithm X" }
-        def route(msg : String) : String = {
-            "Routing " + msg + " with " + algo_name() + " in " + compartment_name();
+        def algo_name() : String = { "Epidemic Routing" }
+        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.ArrayList[DTNHost] = {
+            new java.util.ArrayList[DTNHost](0);
         }
     }
 
@@ -24,7 +27,7 @@ class NaiveCompartment extends AbstractCompartment{
          router play new NaiveAlgorithmA
     }
 
-    def route(router : Player[ActiveRouter], msg : String) : String = {
-        router route msg
+    def route(router : Player[ActiveRouter], m: Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.ArrayList[DTNHost] = {
+        router route (m,prop,me)
     }
 }

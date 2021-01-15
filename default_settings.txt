@@ -158,6 +158,7 @@ Report.report2 = ContactTimesReport
 
 ## Default settings for some routers settings
 ProphetRouter.secondsInTimeUnit = 30
+AdaptiveRouter.secondsInTimeUnit = 30
 SprayAndWaitRouter.nrofCopies = 6
 SprayAndWaitRouter.binaryMode = true
 
