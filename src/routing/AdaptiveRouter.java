@@ -4,6 +4,7 @@
  */
 package routing;
 
+import core.Message;
 import core.Settings;
 import core.Connection;
 
@@ -65,8 +66,23 @@ public class AdaptiveRouter extends ActiveRouter {
 			String curr_ctxt = ctxt_list.get(rand.nextInt(ctxt_list.size()));
 			aCompartment = ca.activate(this, curr_ctxt);
 			adaptedRouter = aCompartment.adapt(this, curr_ctxt);
-			aCompartment.route(adaptedRouter, "MyTestMesg");
+			System.out.println(aCompartment.route(adaptedRouter, "MyTestMesg"));
 		}
+	}
+
+	@Override
+	protected Message tryAllMessages(Connection con, List<Message> messages) {
+		for (Message m : messages) {
+			int retVal = startTransfer(m, con);
+			if (retVal == RCV_OK) {
+				return m;	// accepted a message, don't try others
+			}
+			else if (retVal > 0) {
+				return null; // should try later -> don't bother trying others
+			}
+		}
+
+		return null; // no message was accepted
 	}
 
 
@@ -78,10 +94,7 @@ public class AdaptiveRouter extends ActiveRouter {
 	private void initialize_local_variables(){
 		ca = new CompartmentSwitcher();
 		rand = new Random();
-		ctxt_list = new ArrayList<String>();
-		ctxt_list.add("naive_ctxt");
-		ctxt_list.add("predictive_ctxt");
-		ctxt_list.add("scheduled_ctxt");
+		ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt","scheduled_ctxt"));
 	}
 
 	// Return true if node is connected and at least one message is available
@@ -89,5 +102,4 @@ public class AdaptiveRouter extends ActiveRouter {
 		List<Connection> connections = getConnections();
 		return (connections.size() > 0 && this.getNrofMessages() > 0);
 	}
-
 }

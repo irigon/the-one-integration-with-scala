@@ -5,8 +5,13 @@ public class CompartmentSwitcher {
     final PredictiveCompartment predictiveCompartment = new PredictiveCompartment();
     final NaiveCompartment naiveCompartment = new NaiveCompartment();
 
+    public CompartmentSwitcher() {
+          scheduledCompartment.reconfigure(true, false);
+          predictiveCompartment.reconfigure(true, false);
+          naiveCompartment.reconfigure(true, false);
+    }
+
     public AbstractCompartment activate(ActiveRouter ar, String ctxt) {
-        //System.out.println("Activating " + ctxt);
         switch (ctxt){
             case "scheduled_ctxt" :
                 return scheduledCompartment;
