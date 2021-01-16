@@ -21,7 +21,7 @@ Group3.movementModel = TransitMapMovement
 Group3.routeFile = data/freiburgAltTrajectory/2_stops.csv
 Group3.scheduleFile = data/freiburgAltTrajectory/2_schedule.csv
 Group3.routeType = 2
-Group3.nrofHosts = 24
+Group3.nrofHosts = 12
 Group3.okMaps = 2
 
 
@@ -39,7 +39,7 @@ Group5.movementModel = TransitMapMovement
 Group5.routeFile = data/freiburgAltTrajectory/4_stops.csv
 Group5.scheduleFile = data/freiburgAltTrajectory/4_schedule.csv
 Group5.routeType = 2
-Group5.nrofHosts = 15
+Group5.nrofHosts = 11
 Group5.okMaps = 4
 
 
