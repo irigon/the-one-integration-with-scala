@@ -4,6 +4,7 @@ import core.Message
 import core.DTNHost
 import java.util.HashMap
 import java.util.ArrayList
+import java.util.List
 
 import scroll.internal._
 
@@ -13,14 +14,14 @@ class ScheduledCompartment extends AbstractCompartment {
 
     class ScheduledAlgorithm{
         def algo_name() : String = { "ScheduledAlgorithm A" }
-        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.ArrayList[DTNHost] = {
+        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.List[DTNHost] = {
             new java.util.ArrayList[DTNHost](0);
         }
     }
 
     class AlgorithmBRouter {
         def algo_name() : String = { "Algorithm B" }
-        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.ArrayList[DTNHost] = {
+        def route(m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : java.util.List[DTNHost] = {
             new java.util.ArrayList[DTNHost](0);
         }
     }
@@ -29,7 +30,7 @@ class ScheduledCompartment extends AbstractCompartment {
         router play new ScheduledAlgorithm
     }
 
-    def route(router : Player[ActiveRouter],  m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : ArrayList[DTNHost] = {
+    def route(router : Player[ActiveRouter],  m:Message, prop: HashMap[DTNHost, java.lang.Double], me: DTNHost) : List[DTNHost] = {
         router route (m,prop,me)
 
     }

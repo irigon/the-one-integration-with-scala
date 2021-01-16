@@ -8,8 +8,10 @@ import core.*;
 
 import java.util.*;
 
+import routing.util.RoutingInfo;
 import scroll.internal.Compartment;
 import scroll.internal.Compartment.Player;
+import util.Tuple;
 
 /**
  * Epidemic message router with drop-oldest buffer and only single transferring
@@ -23,10 +25,13 @@ public class AdaptiveRouter extends ActiveRouter {
 	ArrayList<String> ctxt_list;
 	Random rand;
 
-	// From PRoPHET
-	public static final double P_INIT = 0.75;
-	public static final double DEFAULT_BETA = 0.25;
-	public static final double DEFAULT_GAMMA = 0.98;
+
+
+	public static final double PEncMax = 0.5;
+	public static final double I_TYP = 1800;
+	public static final double DEFAULT_BETA = 0.9;
+	public static final double DEFAULT_GAMMA = 0.999885791;
+	Random randomGenerator = new Random();
 	public static final String ADAPTIVE_NS = "AdaptiveRouter";
 	public static final String SECONDS_IN_UNIT_S ="secondsInTimeUnit";
 	public static final String BETA_S = "beta";
@@ -34,8 +39,15 @@ public class AdaptiveRouter extends ActiveRouter {
 	private int secondsInTimeUnit;
 	private double beta;
 	private double gamma;
-	HashMap<DTNHost, Double> preds;
+	private HashMap<DTNHost, Double> preds;
+	private Map<DTNHost, Double> lastEncouterTime;
 	private double lastAgeUpdate;
+
+	// counters
+	private int flood;
+	private int probabilistic;
+
+
 
 	/**
 	 * Constructor. Creates a new message router based on the settings in
@@ -44,7 +56,6 @@ public class AdaptiveRouter extends ActiveRouter {
 	 */
 	public AdaptiveRouter(Settings s) {
 		super(s);
-        initialize_local_variables();
 		Settings adaptiveSettings = new Settings(ADAPTIVE_NS);
 		secondsInTimeUnit = adaptiveSettings.getInt(SECONDS_IN_UNIT_S);
 		if (adaptiveSettings.contains(BETA_S)) {
@@ -60,7 +71,13 @@ public class AdaptiveRouter extends ActiveRouter {
 		else {
 			gamma = DEFAULT_GAMMA;
 		}
+		initialize_local_variables();
+		initEncTimes();
 	}
+
+	/**
+	 * Initializes lastEncouterTime hash
+	 */
 
 	/**
 	 * Copy constructor.
@@ -68,14 +85,19 @@ public class AdaptiveRouter extends ActiveRouter {
 	 */
 	protected AdaptiveRouter(AdaptiveRouter r) {
 		super(r);
-		//TODO: copy epidemic settings here (if any)
+		this.secondsInTimeUnit = r.secondsInTimeUnit;
+		this.beta = r.beta;
+		this.gamma = r.gamma;
 		initialize_local_variables();
+		initEncTimes();
+	}
+
+	private void initEncTimes() {
+		this.lastEncouterTime = new HashMap<DTNHost, Double>();
 	}
 
 	@Override
 	public void changedConnection(Connection con) {
-		super.changedConnection(con);
-
 		if (con.isUp()) {
 			DTNHost otherHost = con.getOtherNode(getHost());
 			updateDeliveryPredFor(otherHost);
@@ -83,15 +105,34 @@ public class AdaptiveRouter extends ActiveRouter {
 		}
 	}
 
-	/**
-	 * Updates delivery predictions for a host.
-	 * <CODE>P(a,b) = P(a,b)_old + (1 - P(a,b)_old) * P_INIT</CODE>
-	 * @param host The host we just met
-	 */
 	private void updateDeliveryPredFor(DTNHost host) {
+		double PEnc;
+		double simTime = SimClock.getTime();
+		double lastEncTime=getEncTimeFor(host);
+		if(lastEncTime==0)
+			PEnc=PEncMax;
+		else
+			if((simTime-lastEncTime)<I_TYP)
+			{
+				PEnc=PEncMax*((simTime-lastEncTime)/I_TYP);
+			}
+			else
+				PEnc=PEncMax;
+
 		double oldValue = getPredFor(host);
-		double newValue = oldValue + (1 - oldValue) * P_INIT;
+		double newValue = oldValue + (1 - oldValue) * PEnc;
 		preds.put(host, newValue);
+		lastEncouterTime.put(host, simTime);
+	}
+
+
+	public double getEncTimeFor(DTNHost host) {
+		if (lastEncouterTime.containsKey(host)) {
+			return lastEncouterTime.get(host);
+		}
+		else {
+			return 0;
+		}
 	}
 
 	/**
@@ -118,7 +159,7 @@ public class AdaptiveRouter extends ActiveRouter {
 	 */
 	private void updateTransitivePreds(DTNHost host) {
 		MessageRouter otherRouter = host.getRouter();
-		assert otherRouter instanceof ProphetRouter : "PRoPHET only works " +
+		assert otherRouter instanceof AdaptiveRouter : "AdaptiveRouter only works " +
 				" with other routers of same type";
 
 		double pForHost = getPredFor(host); // P(a,b)
@@ -132,7 +173,8 @@ public class AdaptiveRouter extends ActiveRouter {
 
 			double pOld = getPredFor(e.getKey()); // P(a,c)_old
 			double pNew = pOld + ( 1 - pOld) * pForHost * e.getValue() * beta;
-			preds.put(e.getKey(), pNew);
+			if(pNew>pOld)
+				preds.put(e.getKey(), pNew);
 		}
 	}
 
@@ -166,10 +208,11 @@ public class AdaptiveRouter extends ActiveRouter {
 		ageDeliveryPreds(); // make sure the aging is done
 		return this.preds;
 	}
+
 	@Override
 	public void update() {
 		super.update();
-		if (isTransferring() || !canStartTransfer()) {
+		if (!canStartTransfer() ||isTransferring()) {
 			return; // transferring, don't try other connections yet
 		}
 
@@ -178,26 +221,103 @@ public class AdaptiveRouter extends ActiveRouter {
 			return; // started a transfer, don't try others (yet)
 		}
 
+		tryOtherMessages();
+	}
+
+	private Tuple<Message, Connection> tryOtherMessages() {
+		List<Tuple<Message, Connection>> messagesToSend = new ArrayList<Tuple<Message, Connection>>();
+		List<Message> messages = new ArrayList<Message>(getMessageCollection());
 		// choose a random context
 		// select available messages ordered by queue mode
 		// and call the role based on context to make the routing decision
 		if (connectedAndReady()) {
+			this.sortByQueueMode(messages);
+		    // chose a context
 			String curr_ctxt = ctxt_list.get(rand.nextInt(ctxt_list.size()));
 			aCompartment = ca.activate(this, curr_ctxt);
 			adaptedRouter = aCompartment.adapt(this, curr_ctxt);
-			ArrayList<Message> messages = new ArrayList<Message>(this.getMessageCollection());
-			this.sortByQueueMode(messages);
-			String properties = "";
-			for (Message m : messages) {
-				//aCompartment.route(adaptedRouter, m, properties);
-				//System.out.println(aCompartment.route(adaptedRouter, m, preds, this.getHost()));
-				ArrayList a = aCompartment.route(adaptedRouter, m, preds, this.getHost());
-            }
-
 			// get active connections
 			List<Connection> active_connections = getConnections();
-			//System.out.println(aCompartment.route(adaptedRouter, "MyTestMesg"));
+			for (Message m : messages) {
+				List candidates = aCompartment.route(adaptedRouter, m, preds, this.getHost());
+				if (preds.size() == candidates.size()) {
+					flood++;
+				} else {
+					probabilistic++;
+				}
+				//System.out.println(this.getHost() + ", flood:" + flood + ", prob:" + probabilistic);
+				// send message to the active connections that are present in the candidates set
+				for (Connection con : active_connections) {
+					DTNHost other = con.getOtherNode(getHost());
+					AdaptiveRouter othRouter = (AdaptiveRouter)other.getRouter();
+					if (othRouter.isTransferring()) {
+						continue; // skip hosts that are transferring
+					}
+					if (othRouter.hasMessage(m.getId())) {
+						continue; // skip messages that the other one has
+					}
+					messagesToSend.add(new Tuple<Message, Connection>(m,con));
+				}
+			}
+			if (messagesToSend.size() == 0) {
+				return null;
+			}
 		}
+		// sort the message-connection tuples
+		Collections.sort(messagesToSend, new AdaptiveRouter.TupleComparator());
+		return tryMessagesForConnected(messagesToSend);	// try to send messages
+	}
+
+	/**
+	 * Comparator for Message-Connection-Tuples that orders the tuples by
+	 * their delivery probability by the host on the other side of the
+	 * connection (GRTRMax)
+	 */
+	private class TupleComparator implements Comparator
+			<Tuple<Message, Connection>> {
+
+		public int compare(Tuple<Message, Connection> tuple1,
+						   Tuple<Message, Connection> tuple2) {
+			// delivery probability of tuple1's message with tuple1's connection
+			double p1 = ((AdaptiveRouter)tuple1.getValue().
+					getOtherNode(getHost()).getRouter()).getPredFor(
+					tuple1.getKey().getTo());
+			// -"- tuple2...
+			double p2 = ((AdaptiveRouter)tuple2.getValue().
+					getOtherNode(getHost()).getRouter()).getPredFor(
+					tuple2.getKey().getTo());
+
+			// bigger probability should come first
+			if (p2-p1 == 0) {
+				/* equal probabilities -> let queue mode decide */
+				return compareByQueueMode(tuple1.getKey(), tuple2.getKey());
+			}
+			else if (p2-p1 < 0) {
+				return -1;
+			}
+			else {
+				return 1;
+			}
+		}
+	}
+
+	@Override
+	public RoutingInfo getRoutingInfo() {
+		ageDeliveryPreds();
+		RoutingInfo top = super.getRoutingInfo();
+		RoutingInfo ri = new RoutingInfo(preds.size() +
+				" delivery prediction(s)");
+
+		for (Map.Entry<DTNHost, Double> e : preds.entrySet()) {
+			DTNHost host = e.getKey();
+			Double value = e.getValue();
+
+			ri.addMoreInfo(new RoutingInfo(String.format("%s : %.6f",
+					host, value)));
+		}
+
+		top.addMoreInfo(ri);
+		return top;
 	}
 
 	@Override
@@ -208,8 +328,10 @@ public class AdaptiveRouter extends ActiveRouter {
 	private void initialize_local_variables(){
 		ca = new CompartmentSwitcher();
 		rand = new Random();
-		ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt","scheduled_ctxt"));
+		ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt"));
 		this.preds = new HashMap<DTNHost, Double>();
+		flood = 0;
+		probabilistic = 0;
 	}
 
 	// Return true if node is connected and at least one message is available
