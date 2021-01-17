@@ -48,6 +48,18 @@ public class AdaptiveRouter extends ActiveRouter {
 	private int probabilistic;
 
 
+	// return a snapshot of the counters
+	public Tuple<Integer, Integer> routing_strategy_counters(){
+		Tuple<Integer, Integer> current_values = new Tuple<Integer, Integer> (flood, probabilistic);
+		reset_routing_strategy_counters();
+		return current_values;
+	}
+
+	// reset the flooding and probabilistic counters
+	public void reset_routing_strategy_counters(){
+		flood = 0;
+		probabilistic = 0;
+	}
 
 	/**
 	 * Constructor. Creates a new message router based on the settings in
@@ -243,6 +255,7 @@ public class AdaptiveRouter extends ActiveRouter {
 			List<Connection> active_connections = getConnections();
 			// select context
         	String curr_ctxt = get_context(active_connections);
+        	//System.out.println("Contexto: " + curr_ctxt);
 			aCompartment = ca.activate(this, curr_ctxt);
 			adaptedRouter = aCompartment.adapt(this, curr_ctxt);
 			// get active connections
