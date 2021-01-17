@@ -224,6 +224,13 @@ public class AdaptiveRouter extends ActiveRouter {
 		tryOtherMessages();
 	}
 
+	// during the first x hours learn the path
+	// After the learning phase, meeting with known devices results in predictive routing, otherwise epidemic
+	private String get_context(List<Connection> connections) {
+		String curr_ctxt = ctxt_list.get(rand.nextInt(ctxt_list.size()));
+		return curr_ctxt;
+	}
+
 	private Tuple<Message, Connection> tryOtherMessages() {
 		List<Tuple<Message, Connection>> messagesToSend = new ArrayList<Tuple<Message, Connection>>();
 		List<Message> messages = new ArrayList<Message>(getMessageCollection());
@@ -233,11 +240,12 @@ public class AdaptiveRouter extends ActiveRouter {
 		if (connectedAndReady()) {
 			this.sortByQueueMode(messages);
 		    // chose a context
-			String curr_ctxt = ctxt_list.get(rand.nextInt(ctxt_list.size()));
+			List<Connection> active_connections = getConnections();
+			// select context
+        	String curr_ctxt = get_context(active_connections);
 			aCompartment = ca.activate(this, curr_ctxt);
 			adaptedRouter = aCompartment.adapt(this, curr_ctxt);
 			// get active connections
-			List<Connection> active_connections = getConnections();
 			for (Message m : messages) {
 				List candidates = aCompartment.route(adaptedRouter, m, preds, this.getHost());
 				if (preds.size() == candidates.size()) {
