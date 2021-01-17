@@ -47,8 +47,10 @@ public class Coord implements Cloneable, Comparable<Coord> {
 	 * @param dy How much to move the point in Y-direction
 	 */
 	public void translate(double dx, double dy) {
+		//System.out.print(this.x + " " + this.y + " : ");
 		this.x += dx;
 		this.y += dy;
+		//System.out.println(this.x + " " + this.y);
 	}
 
 	/**

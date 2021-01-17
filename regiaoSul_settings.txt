@@ -1,0 +1,138 @@
+#Scenario.name = regiaoSul
+Scenario.nrofHostGroups = 15
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/regiaoSul/stations.wkt
+Group1.nrofHosts = 8
+
+Group2.groupID = C 
+Group2.movementModel = StationaryMultiPointMovement
+Group2.stationarySystemNr = 2
+Group2.pointFile = data/regiaoSul/cities.wkt
+Group2.nrofHosts = 11
+
+Group3.groupID = J.AG.PO.B
+Group3.movementModel = TransitMapMovement
+Group3.routeFile = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_stops.csv
+Group3.scheduleFile = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_schedule.csv
+Group3.routeType = 1 
+Group3.nrofHosts = 1
+Group3.okMaps = 1
+
+Group4.groupID = J.AG.Pel
+Group4.movementModel = TransitMapMovement
+Group4.routeFile = data/regiaoSul/JaguaraoArroioGrandePelotas_stops.csv
+Group4.scheduleFile = data/regiaoSul/JaguaraoArroioGrandePelotas_schedule.csv
+Group4.routeType = 2 
+Group4.nrofHosts = 4
+Group4.okMaps = 2 
+
+Group5.groupID = H.AG
+Group5.movementModel = TransitMapMovement
+Group5.routeFile = data/regiaoSul/HervalArroioGrande_stops.csv
+Group5.scheduleFile = data/regiaoSul/HervalArroioGrande_schedule.csv
+Group5.routeType = 2 
+Group5.nrofHosts = 1
+Group5.okMaps = 3 
+
+Group6.groupID = H.PO.Pel
+Group6.movementModel = TransitMapMovement
+Group6.routeFile = data/regiaoSul/HervalPedroOsorioPelotas_stops.csv
+Group6.scheduleFile = data/regiaoSul/HervalPedroOsorioPelotas_schedule.csv
+Group6.routeType = 2 
+Group6.nrofHosts = 1
+Group6.okMaps = 4 
+
+Group7.groupID = H.AG.Pel
+Group7.movementModel = TransitMapMovement
+Group7.routeFile = data/regiaoSul/HervalArroioGrandePelotas_stops.csv
+Group7.scheduleFile = data/regiaoSul/HervalArroioGrandePelotas_schedule.csv
+Group7.routeType = 2 
+Group7.nrofHosts = 2
+Group7.okMaps = 5 
+
+Group8.groupID = B.PM.Pel
+Group8.movementModel = TransitMapMovement
+Group8.routeFile = data/regiaoSul/BagePinheiroMachadoPelotas_stops.csv
+Group8.scheduleFile = data/regiaoSul/BagePinheiroMachadoPelotas_schedule.csv
+Group8.routeType = 2 
+Group8.nrofHosts = 5
+Group8.okMaps = 6 
+
+Group9.groupID = PM.PA.H.J
+Group9.movementModel = TransitMapMovement
+Group9.routeFile = data/regiaoSul/PinheiroMachadoPedrasAltasHervalJaguarao_stops.csv
+Group9.scheduleFile = data/regiaoSul/PinheiroMachadoPedrasAltasHervalJaguarao_schedule.csv
+Group9.routeType = 2 
+Group9.nrofHosts = 1
+Group9.okMaps = 7 
+
+Group10.groupID = Pel.PO.Pi
+Group10.movementModel = TransitMapMovement
+Group10.routeFile = data/regiaoSul/PelotasPedroOsorioPiratini_stops.csv
+Group10.scheduleFile = data/regiaoSul/PelotasPedroOsorioPiratini_schedule.csv
+Group10.routeType = 2 
+Group10.nrofHosts = 1
+Group10.okMaps = 8 
+
+Group11.groupID = Pi.PM
+Group11.movementModel = TransitMapMovement
+Group11.routeFile = data/regiaoSul/PiratiniPinheiroMachadoviaJoaoSaraiva_stops.csv
+Group11.scheduleFile = data/regiaoSul/PiratiniPinheiroMachadoviaJoaoSaraiva_schedule.csv
+Group11.routeType = 2 
+Group11.nrofHosts = 1
+Group11.okMaps = 9 
+
+Group12.groupID = Ca.Pi
+Group12.movementModel = TransitMapMovement
+Group12.routeFile = data/regiaoSul/CangucuPiratini_stops.csv
+Group12.scheduleFile = data/regiaoSul/CangucuPiratini_schedule.csv
+Group12.routeType = 2 
+Group12.nrofHosts = 1
+Group12.okMaps = 10 
+
+Group13.groupID = Pi.Pel
+Group13.movementModel = TransitMapMovement
+Group13.routeFile = data/regiaoSul/PiratiniPelotas_stops.csv
+Group13.scheduleFile = data/regiaoSul/PiratiniPelotas_schedule.csv
+Group13.routeType = 2 
+Group13.nrofHosts = 2
+Group13.okMaps = 11 
+
+Group14.groupID = Ce.Pp.Fa.Pel
+Group14.movementModel = TransitMapMovement
+Group14.routeFile = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_stops.csv
+Group14.scheduleFile = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_schedule.csv
+Group14.routeType = 2 
+Group14.nrofHosts = 1
+Group14.okMaps = 12 
+
+Group15.groupID = Pel.Ca
+Group15.movementModel = TransitMapMovement
+Group15.routeFile = data/regiaoSul/PelotasCangucu_stops.csv
+Group15.scheduleFile = data/regiaoSul/PelotasCangucu_schedule.csv
+Group15.routeType = 2 
+Group15.nrofHosts = 2
+Group15.okMaps = 13 
+
+MapBasedMovement.nrofMapFiles = 13
+MapBasedMovement.mapFile1 = data/regiaoSul/JaguaraoArroioGrandePedroOsorioBage_nodes.wkt
+MapBasedMovement.mapFile2 = data/regiaoSul/JaguaraoArroioGrandePelotas_nodes.wkt
+MapBasedMovement.mapFile3 = data/regiaoSul/HervalArroioGrande_nodes.wkt
+MapBasedMovement.mapFile4 = data/regiaoSul/HervalPedroOsorioPelotas_nodes.wkt
+MapBasedMovement.mapFile5 = data/regiaoSul/HervalArroioGrandePelotas_nodes.wkt
+MapBasedMovement.mapFile6 = data/regiaoSul/BagePinheiroMachadoPelotas_nodes.wkt
+MapBasedMovement.mapFile7 = data/regiaoSul/PinheiroMachadoPedrasAltasHervalJaguarao_nodes.wkt
+MapBasedMovement.mapFile8 = data/regiaoSul/PelotasPedroOsorioPiratini_nodes.wkt
+MapBasedMovement.mapFile9 = data/regiaoSul/PiratiniPinheiroMachadoviaJoaoSaraiva_nodes.wkt
+MapBasedMovement.mapFile10 = data/regiaoSul/CangucuPiratini_nodes.wkt
+MapBasedMovement.mapFile11 = data/regiaoSul/PiratiniPelotas_nodes.wkt
+MapBasedMovement.mapFile12 = data/regiaoSul/CerritoPassoDasPedrasFaixaPelotas_nodes.wkt
+MapBasedMovement.mapFile13 = data/regiaoSul/PelotasCangucu_nodes.wkt
+
+Group.waitTime = 30,50
+MovementModel.worldSize = 168000, 139000
+Events1.hosts = 0,8
+

@@ -21,3 +21,10 @@ src/gui/buttonGraphics/buttonGraphics/
 
 # Intellij files
 .idea
+/bin/
+
+# gtfs
+toolkit/gtfs/lib/__pycache__/
+toolkit/gtfs/lib/gtfs/__pycache__/
+toolkit/gtfs/venv/
+

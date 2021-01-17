@@ -24,6 +24,7 @@ public class DTNHost implements Comparable<DTNHost> {
 
 	private Coord location; 	// where is the host
 	private Coord destination;	// where is it going
+	private boolean communicationSystemON;	// communication System: ON = 1, OFF = 0
 
 	private MessageRouter router;
 	private MovementModel movement;
@@ -55,6 +56,7 @@ public class DTNHost implements Comparable<DTNHost> {
 			String groupId, List<NetworkInterface> interf,
 			ModuleCommunicationBus comBus,
 			MovementModel mmProto, MessageRouter mRouterProto) {
+		this.communicationSystemON = true;
 		this.comBus = comBus;
 		this.location = new Coord(0,0);
 		this.address = getNextAddress();
@@ -105,6 +107,24 @@ public class DTNHost implements Comparable<DTNHost> {
 	 */
 	public static void reset() {
 		nextAddress = 0;
+	}
+
+	/**
+	 * Set the state of the communication System
+	 */
+	public void setCommunicationSystemON( boolean state ) {
+		communicationSystemON = state;
+		if (state == false) {
+			tearDownAllConnections();
+		}
+	}
+
+	/**
+	 * Returns true if the communication system is ON (OFF if not)
+	 * @return true if the communication system is ON (OFF if not)
+	 */
+	public boolean isCommunicationSystemON() {
+		return communicationSystemON;
 	}
 
 	/**
@@ -335,6 +355,12 @@ public class DTNHost implements Comparable<DTNHost> {
 		if (!isRadioActive()) {
 			// Make sure inactive nodes don't have connections
 			tearDownAllConnections();
+
+            // TODO: change this 5 min to be configurable
+			if (SimClock.getTime() > this.nextTimeToMove - 300) {
+                setCommunicationSystemON(true);
+            }
+
 			return;
 		}
 
@@ -384,6 +410,9 @@ public class DTNHost implements Comparable<DTNHost> {
 			if (!setNextWaypoint()) {
 				return;
 			}
+			
+			// A device will move, start the communication system
+			//setCommunicationSystemON(true);
 		}
 
 		possibleMovement = timeIncrement * speed;
@@ -433,7 +462,7 @@ public class DTNHost implements Comparable<DTNHost> {
 				l.newDestination(this, this.destination, this.speed);
 			}
 		}
-
+		
 		return true;
 	}
 
@@ -498,7 +527,10 @@ public class DTNHost implements Comparable<DTNHost> {
 	 * @param m The message to create
 	 */
 	public void createNewMessage(Message m) {
-		this.router.createNewMessage(m);
+		// do not create messages if the communication system is turned off
+		if (isCommunicationSystemON()){
+			this.router.createNewMessage(m);
+		}
 	}
 
 	/**

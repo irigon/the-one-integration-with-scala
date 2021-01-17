@@ -56,7 +56,7 @@ public class MapBasedMovement extends MovementModel implements SwitchableMovemen
 	public static final String MAP_SELECT_S = "okMaps";
 
 	/** the indexes of the OK map files or null if all maps are OK */
-	private int [] okMapNodeTypes;
+	private long [] okMapNodeTypes;
 
 	/** how many map files are read */
 	private int nrofMapFilesRead = 0;
@@ -101,8 +101,8 @@ public class MapBasedMovement extends MovementModel implements SwitchableMovemen
 	 */
 	private void readOkMapNodeTypes(Settings settings) {
 		if (settings.contains(MAP_SELECT_S)) {
-			this.okMapNodeTypes = settings.getCsvInts(MAP_SELECT_S);
-			for (int i : okMapNodeTypes) {
+			this.okMapNodeTypes = settings.getCsvLongs(MAP_SELECT_S);
+			for (long i : okMapNodeTypes) {
 				if (i < MapNode.MIN_TYPE || i > MapNode.MAX_TYPE) {
 					throw new SettingsError("Map type selection '" + i +
 							"' is out of range for setting " +
@@ -173,7 +173,7 @@ public class MapBasedMovement extends MovementModel implements SwitchableMovemen
 	 * or null if all values are considered ok
 	 * @return map node types that are OK for this movement model in an array
 	 */
-	protected int[] getOkMapNodeTypes() {
+	protected long[] getOkMapNodeTypes() {
 		return okMapNodeTypes;
 	}
 
@@ -314,7 +314,7 @@ public class MapBasedMovement extends MovementModel implements SwitchableMovemen
 	 * @param nodes The list of nodes to check
 	 * @throws SettingsError if all map nodes are not connected
 	 */
-	private void checkMapConnectedness(List<MapNode> nodes) {
+	protected void checkMapConnectedness(List<MapNode> nodes) {
 		Set<MapNode> visited = new HashSet<MapNode>();
 		Queue<MapNode> unvisited = new LinkedList<MapNode>();
 		MapNode firstNode;

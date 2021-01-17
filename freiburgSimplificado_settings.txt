@@ -1,0 +1,25 @@
+#Scenario.name = freiburg1True
+Scenario.nrofHostGroups = 2
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/freiburg1True/stationsSimple.wkt
+Group1.nrofHosts = 22
+
+
+Group2.groupID = 1_
+Group2.movementModel = TransitMapMovement
+Group2.routeFile = data/freiburg1True/1_stops.csv
+Group2.scheduleFile = data/freiburg1True/1_schedule.csv
+Group2.routeType = 2
+Group2.nrofHosts = 23
+Group2.okMaps = 1
+
+
+MapBasedMovement.nrofMapFiles = 1
+MapBasedMovement.mapFile1 = data/freiburg1True/1_nodes.wkt
+
+
+MovementModel.worldSize = 7978, 7846
+Events1.hosts = 0,2

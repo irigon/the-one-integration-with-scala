@@ -4,6 +4,7 @@
  */
 package movement.map;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
 
@@ -18,13 +19,13 @@ public class MapNode implements Comparable<MapNode> {
 	/** Smallest valid type of a node: {@value}*/
 	public static final int MIN_TYPE = 1;
 	/** Biggest valid type of a node: {@value} */
-	public static final int MAX_TYPE = 31;
+	public static final int MAX_TYPE = 63;
 
 
 	private Coord location;
 	private Vector<MapNode> neighbors;
 	// bit mask of map node's types or 0 if no type's are defined
-	private int type;
+	private long type;
 
 	/**
 	 * Constructor. Creates a map node to a location.
@@ -40,7 +41,7 @@ public class MapNode implements Comparable<MapNode> {
 	 * Adds a type indicator to this node
 	 * @param type An integer from range [{@value MIN_TYPE}, {@value MAX_TYPE}]
 	 */
-	public void addType(int type) {
+	public void addType(long type) {
 		this.type |= typeToBitMask(type);
 	}
 
@@ -51,7 +52,7 @@ public class MapNode implements Comparable<MapNode> {
 	 * {@value MAX_TYPE}])
 	 * @return True if this node is of given type
 	 */
-	public boolean isType(int type) {
+	public boolean isType(long type) {
 		if (this.type == 0) {
 			return false;
 		}
@@ -67,8 +68,8 @@ public class MapNode implements Comparable<MapNode> {
 	 * types matched
 	 * @see #isType(int)
 	 */
-	public boolean isType(int[] types) {
-		for (int type : types) {
+	public boolean isType(long[] types) {
+		for (long type : types) {
 			if (isType(type)) {
 				return true;
 			}
@@ -83,7 +84,7 @@ public class MapNode implements Comparable<MapNode> {
 	 * @return A bit mask for the given type
 	 * @throws SettingsError if the type is out of range
 	 */
-	private int typeToBitMask(int type) {
+	private long typeToBitMask(long type) {
 		assert type >= MIN_TYPE && type <= MAX_TYPE : "Invalid node type "+type;
 		return 1 << type; // create the mask by bitwise shift
 	}
@@ -142,5 +143,8 @@ public class MapNode implements Comparable<MapNode> {
 	public int compareTo(MapNode o) {
 		return this.getLocation().compareTo((o).getLocation());
 	}
-
+	
+	public long getType() {
+		return type;
+	}
 }

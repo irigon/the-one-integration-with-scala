@@ -1,0 +1,105 @@
+#Scenario.name = helsinki1_true
+Scenario.nrofHostGroups = 10
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/helsinki1True/stations.wkt
+Group1.nrofHosts = 213
+
+Group2.groupID = 1_
+Group2.movementModel = TransitMapMovement
+Group2.routeFile = data/helsinki1True/1_stops.csv
+Group2.scheduleFile = data/helsinki1True/1_schedule.csv
+Group2.routeType = 2
+Group2.nrofHosts = 11
+Group2.okMaps = 1
+
+
+Group3.groupID = 2_
+Group3.movementModel = TransitMapMovement
+Group3.routeFile = data/helsinki1True/2_stops.csv
+Group3.scheduleFile = data/helsinki1True/2_schedule.csv
+Group3.routeType = 2
+Group3.nrofHosts = 10
+Group3.okMaps = 2
+
+Group4.groupID = 3_
+Group4.movementModel = TransitMapMovement
+Group4.routeFile = data/helsinki1True/3_stops.csv
+Group4.scheduleFile = data/helsinki1True/3_schedule.csv
+Group4.routeType = 2
+Group4.nrofHosts = 10
+Group4.okMaps = 3
+
+
+Group5.groupID = 4_
+Group5.movementModel = TransitMapMovement
+Group5.routeFile = data/helsinki1True/4_stops.csv
+Group5.scheduleFile = data/helsinki1True/4_schedule.csv
+Group5.routeType = 2
+Group5.nrofHosts = 16
+Group5.okMaps = 4
+
+
+Group6.groupID = 6T_
+Group6.movementModel = TransitMapMovement
+Group6.routeFile = data/helsinki1True/6T_stops.csv
+Group6.scheduleFile = data/helsinki1True/6T_schedule.csv
+Group6.routeType = 2
+Group6.nrofHosts = 15
+Group6.okMaps = 5
+
+
+Group7.groupID = 7_
+Group7.movementModel = TransitMapMovement
+Group7.routeFile = data/helsinki1True/7_stops.csv
+Group7.scheduleFile = data/helsinki1True/7_schedule.csv
+Group7.routeType = 2
+Group7.nrofHosts = 18
+Group7.okMaps = 6
+
+
+Group8.groupID = 8_
+Group8.movementModel = TransitMapMovement
+Group8.routeFile = data/helsinki1True/8_stops.csv
+Group8.scheduleFile = data/helsinki1True/8_schedule.csv
+Group8.routeType = 2
+Group8.nrofHosts = 12
+Group8.okMaps = 7
+
+
+Group9.groupID = 9_
+Group9.movementModel = TransitMapMovement
+Group9.routeFile = data/helsinki1True/9_stops.csv
+Group9.scheduleFile = data/helsinki1True/9_schedule.csv
+Group9.routeType = 2
+Group9.nrofHosts = 11
+Group9.okMaps = 8
+
+
+Group10.groupID = 10_
+Group10.movementModel = TransitMapMovement
+Group10.routeFile = data/helsinki1True/10_stops.csv
+Group10.scheduleFile = data/helsinki1True/10_schedule.csv
+Group10.routeType = 2
+Group10.nrofHosts = 13
+Group10.okMaps = 9
+
+
+
+
+MapBasedMovement.nrofMapFiles = 9
+MapBasedMovement.mapFile1 = data/helsinki1True/1_nodes.wkt
+MapBasedMovement.mapFile2 = data/helsinki1True/2_nodes.wkt
+MapBasedMovement.mapFile3 = data/helsinki1True/3_nodes.wkt
+MapBasedMovement.mapFile4 = data/helsinki1True/4_nodes.wkt
+MapBasedMovement.mapFile5 = data/helsinki1True/6T_nodes.wkt
+MapBasedMovement.mapFile6 = data/helsinki1True/7_nodes.wkt
+MapBasedMovement.mapFile7 = data/helsinki1True/8_nodes.wkt
+MapBasedMovement.mapFile8 = data/helsinki1True/9_nodes.wkt
+MapBasedMovement.mapFile9 = data/helsinki1True/10_nodes.wkt
+
+
+MovementModel.worldSize = 5862, 7400
+Events1.hosts = 0,213

@@ -1,0 +1,4 @@
+map_INFOS="GTFS Latest openmobility / transitfeeds"
+map_IGNORE=false
+OSM_source="https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3Barea%283600034914%29%2D%3E%2EsearchArea%3B%28relation%5B%22route%22%3D%22tram%22%5D%28area%2EsearchArea%29%3B%29%3Bout%3B%3E%3Bout%20qt%3B%0A"
+GTFS_source="https://transitfeeds.com/p/helsinki-regional-transport/735/latest/download"

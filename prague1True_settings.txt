@@ -1,0 +1,252 @@
+#Scenario.name = prague1TrueTrue
+Scenario.nrofHostGroups = 25
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/prague1True/stations.wkt
+Group1.nrofHosts = 432
+
+
+Group2.groupID = 1_
+Group2.movementModel = TransitMapMovement
+Group2.routeFile = data/prague1True/1_stops.csv
+Group2.scheduleFile = data/prague1True/1_schedule.csv
+Group2.routeType = 2
+Group2.nrofHosts = 39
+Group2.okMaps = 1
+
+Group3.groupID = 2_
+Group3.movementModel = TransitMapMovement
+Group3.routeFile = data/prague1True/2_stops.csv
+Group3.scheduleFile = data/prague1True/2_schedule.csv
+Group3.routeType = 2
+Group3.nrofHosts = 18
+Group3.okMaps = 2
+
+Group4.groupID = 3_
+Group4.movementModel = TransitMapMovement
+Group4.routeFile = data/prague1True/3_stops.csv
+Group4.scheduleFile = data/prague1True/3_schedule.csv
+Group4.routeType = 2
+Group4.nrofHosts = 49
+Group4.okMaps = 3
+
+Group5.groupID = 4_
+Group5.movementModel = TransitMapMovement
+Group5.routeFile = data/prague1True/4_stops.csv
+Group5.scheduleFile = data/prague1True/4_schedule.csv
+Group5.routeType = 2
+Group5.nrofHosts = 12
+Group5.okMaps = 4
+
+
+Group6.groupID = 5_
+Group6.movementModel = TransitMapMovement
+Group6.routeFile = data/prague1True/5_stops.csv
+Group6.scheduleFile = data/prague1True/5_schedule.csv
+Group6.routeType = 2
+Group6.nrofHosts = 20
+Group6.okMaps = 5
+
+
+Group7.groupID = 6_
+Group7.movementModel = TransitMapMovement
+Group7.routeFile = data/prague1True/6_stops.csv
+Group7.scheduleFile = data/prague1True/6_schedule.csv
+Group7.routeType = 2
+Group7.nrofHosts = 18
+Group7.okMaps = 6
+
+
+Group8.groupID = 7_
+Group8.movementModel = TransitMapMovement
+Group8.routeFile = data/prague1True/7_stops.csv
+Group8.scheduleFile = data/prague1True/7_schedule.csv
+Group8.routeType = 2
+Group8.nrofHosts = 21
+Group8.okMaps = 7
+
+
+Group9.groupID = 8_
+Group9.movementModel = TransitMapMovement
+Group9.routeFile = data/prague1True/8_stops.csv
+Group9.scheduleFile = data/prague1True/8_schedule.csv
+Group9.routeType = 2
+Group9.nrofHosts = 16
+Group9.okMaps = 8
+
+
+Group10.groupID = 9_
+Group10.movementModel = TransitMapMovement
+Group10.routeFile = data/prague1True/9_stops.csv
+Group10.scheduleFile = data/prague1True/9_schedule.csv
+Group10.routeType = 2
+Group10.nrofHosts = 51
+Group10.okMaps = 9
+
+Group11.groupID = 10_
+Group11.movementModel = TransitMapMovement
+Group11.routeFile = data/prague1True/10_stops.csv
+Group11.scheduleFile = data/prague1True/10_schedule.csv
+Group11.routeType = 2
+Group11.nrofHosts = 33
+Group11.okMaps = 10
+
+
+Group12.groupID = 11_
+Group12.movementModel = TransitMapMovement
+Group12.routeFile = data/prague1True/11_stops.csv
+Group12.scheduleFile = data/prague1True/11_schedule.csv
+Group12.routeType = 2
+Group12.nrofHosts = 17
+Group12.okMaps = 11
+
+
+Group13.groupID = 12_
+Group13.movementModel = TransitMapMovement
+Group13.routeFile = data/prague1True/12_stops.csv
+Group13.scheduleFile = data/prague1True/12_schedule.csv
+Group13.routeType = 2
+Group13.nrofHosts = 18
+Group13.okMaps = 12
+
+
+Group14.groupID = 13_
+Group14.movementModel = TransitMapMovement
+Group14.routeFile = data/prague1True/13_stops.csv
+Group14.scheduleFile = data/prague1True/13_schedule.csv
+Group14.routeType = 2
+Group14.nrofHosts = 17
+Group14.okMaps = 13
+
+
+Group15.groupID = 14_
+Group15.movementModel = TransitMapMovement
+Group15.routeFile = data/prague1True/14_stops.csv
+Group15.scheduleFile = data/prague1True/14_schedule.csv
+Group15.routeType = 2
+Group15.nrofHosts = 17
+Group15.okMaps = 14
+
+
+Group16.groupID = 15_
+Group16.movementModel = TransitMapMovement
+Group16.routeFile = data/prague1True/15_stops.csv
+Group16.scheduleFile = data/prague1True/15_schedule.csv
+Group16.routeType = 2
+Group16.nrofHosts = 16
+Group16.okMaps = 15
+
+
+Group17.groupID = 16_
+Group17.movementModel = TransitMapMovement
+Group17.routeFile = data/prague1True/16_stops.csv
+Group17.scheduleFile = data/prague1True/16_schedule.csv
+Group17.routeType = 2
+Group17.nrofHosts = 19
+Group17.okMaps = 16
+
+
+Group18.groupID = 17_
+Group18.movementModel = TransitMapMovement
+Group18.routeFile = data/prague1True/17_stops.csv
+Group18.scheduleFile = data/prague1True/17_schedule.csv
+Group18.routeType = 2
+Group18.nrofHosts = 50
+Group18.okMaps = 17
+
+
+Group19.groupID = 18_
+Group19.movementModel = TransitMapMovement
+Group19.routeFile = data/prague1True/18_stops.csv
+Group19.scheduleFile = data/prague1True/18_schedule.csv
+Group19.routeType = 2
+Group19.nrofHosts = 13
+Group19.okMaps = 18
+
+
+Group20.groupID = 20_
+Group20.movementModel = TransitMapMovement
+Group20.routeFile = data/prague1True/20_stops.csv
+Group20.scheduleFile = data/prague1True/20_schedule.csv
+Group20.routeType = 2
+Group20.nrofHosts = 27
+Group20.okMaps = 19
+
+
+Group21.groupID = 21_
+Group21.movementModel = TransitMapMovement
+Group21.routeFile = data/prague1True/21_stops.csv
+Group21.scheduleFile = data/prague1True/21_schedule.csv
+Group21.routeType = 2
+Group21.nrofHosts = 19
+Group21.okMaps = 20
+
+
+Group22.groupID = 22_
+Group22.movementModel = TransitMapMovement
+Group22.routeFile = data/prague1True/22_stops.csv
+Group22.scheduleFile = data/prague1True/22_schedule.csv
+Group22.routeType = 2
+Group22.nrofHosts = 129
+Group22.okMaps = 21
+
+
+Group23.groupID = 24_
+Group23.movementModel = TransitMapMovement
+Group23.routeFile = data/prague1True/24_stops.csv
+Group23.scheduleFile = data/prague1True/24_schedule.csv
+Group23.routeType = 2
+Group23.nrofHosts = 15
+Group23.okMaps = 22
+
+
+Group24.groupID = 25_
+Group24.movementModel = TransitMapMovement
+Group24.routeFile = data/prague1True/25_stops.csv
+Group24.scheduleFile = data/prague1True/25_schedule.csv
+Group24.routeType = 2
+Group24.nrofHosts = 22
+Group24.okMaps = 23
+
+
+Group25.groupID = 26_
+Group25.movementModel = TransitMapMovement
+Group25.routeFile = data/prague1True/26_stops.csv
+Group25.scheduleFile = data/prague1True/26_schedule.csv
+Group25.routeType = 2
+Group25.nrofHosts = 25
+Group25.okMaps = 24
+
+
+
+MapBasedMovement.nrofMapFiles = 24
+MapBasedMovement.mapFile1 = data/prague1True/1_nodes.wkt
+MapBasedMovement.mapFile2 = data/prague1True/2_nodes.wkt
+MapBasedMovement.mapFile3 = data/prague1True/3_nodes.wkt
+MapBasedMovement.mapFile4 = data/prague1True/4_nodes.wkt
+MapBasedMovement.mapFile5 = data/prague1True/5_nodes.wkt
+MapBasedMovement.mapFile6 = data/prague1True/6_nodes.wkt
+MapBasedMovement.mapFile7 = data/prague1True/7_nodes.wkt
+MapBasedMovement.mapFile8 = data/prague1True/8_nodes.wkt
+MapBasedMovement.mapFile9 = data/prague1True/9_nodes.wkt
+MapBasedMovement.mapFile10 = data/prague1True/10_nodes.wkt
+MapBasedMovement.mapFile11 = data/prague1True/11_nodes.wkt
+MapBasedMovement.mapFile12 = data/prague1True/12_nodes.wkt
+MapBasedMovement.mapFile13 = data/prague1True/13_nodes.wkt
+MapBasedMovement.mapFile14 = data/prague1True/14_nodes.wkt
+MapBasedMovement.mapFile15 = data/prague1True/15_nodes.wkt
+MapBasedMovement.mapFile16 = data/prague1True/16_nodes.wkt
+MapBasedMovement.mapFile17 = data/prague1True/17_nodes.wkt
+MapBasedMovement.mapFile18 = data/prague1True/18_nodes.wkt
+MapBasedMovement.mapFile19 = data/prague1True/20_nodes.wkt
+MapBasedMovement.mapFile20 = data/prague1True/21_nodes.wkt
+MapBasedMovement.mapFile21 = data/prague1True/22_nodes.wkt
+MapBasedMovement.mapFile22 = data/prague1True/24_nodes.wkt
+MapBasedMovement.mapFile23 = data/prague1True/25_nodes.wkt
+MapBasedMovement.mapFile24 = data/prague1True/26_nodes.wkt
+
+
+MovementModel.worldSize = 17907, 14548
+Events1.hosts = 0,432

@@ -1,0 +1,66 @@
+#Scenario.name = freiburgNotSplitted
+Scenario.nrofHostGroups = 6
+
+Group1.groupID = S
+Group1.movementModel = StationaryMultiPointMovement
+Group1.stationarySystemNr = 1
+Group1.pointFile = data/freiburgNotSplitted/stations.wkt
+Group1.nrofHosts = 89
+
+
+Group2.groupID = 1_
+Group2.movementModel = TransitMapMovement
+Group2.routeFile = data/freiburgNotSplitted/1_stops.csv
+Group2.scheduleFile = data/freiburgNotSplitted/1_schedule.csv
+Group2.routeType = 2
+Group2.nrofHosts = 23
+Group2.okMaps = 1
+
+
+Group3.groupID = 2_
+Group3.movementModel = TransitMapMovement
+Group3.routeFile = data/freiburgNotSplitted/2_stops.csv
+Group3.scheduleFile = data/freiburgNotSplitted/2_schedule.csv
+Group3.routeType = 2
+Group3.nrofHosts = 21
+Group3.okMaps = 2
+
+
+Group4.groupID = 3_
+Group4.movementModel = TransitMapMovement
+Group4.routeFile = data/freiburgNotSplitted/3_stops.csv
+Group4.scheduleFile = data/freiburgNotSplitted/3_schedule.csv
+Group4.routeType = 2
+Group4.nrofHosts = 24
+Group4.okMaps = 3
+
+
+Group5.groupID = 4_
+Group5.movementModel = TransitMapMovement
+Group5.routeFile = data/freiburgNotSplitted/4_stops.csv
+Group5.scheduleFile = data/freiburgNotSplitted/4_schedule.csv
+Group5.routeType = 2
+Group5.nrofHosts = 15
+Group5.okMaps = 4
+
+
+Group6.groupID = 5_
+Group6.movementModel = TransitMapMovement
+Group6.routeFile = data/freiburgNotSplitted/5_stops.csv
+Group6.scheduleFile = data/freiburgNotSplitted/5_schedule.csv
+Group6.routeType = 2
+Group6.nrofHosts = 11
+Group6.okMaps = 5
+
+
+
+MapBasedMovement.nrofMapFiles = 5
+MapBasedMovement.mapFile1 = data/freiburgNotSplitted/1_nodes.wkt
+MapBasedMovement.mapFile2 = data/freiburgNotSplitted/2_nodes.wkt
+MapBasedMovement.mapFile3 = data/freiburgNotSplitted/3_nodes.wkt
+MapBasedMovement.mapFile4 = data/freiburgNotSplitted/4_nodes.wkt
+MapBasedMovement.mapFile5 = data/freiburgNotSplitted/5_nodes.wkt
+
+
+MovementModel.worldSize = 7978, 7846
+Events1.hosts = 0,89
