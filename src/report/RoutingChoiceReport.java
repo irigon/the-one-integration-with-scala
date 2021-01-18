@@ -83,6 +83,7 @@ public class RoutingChoiceReport extends Report implements UpdateListener {
 
 		String output = format(SimClock.getTime()) + " " + format(flood) + " " +
 			format(probabilistic);
+		//System.out.println("Time:" + SimClock.getTime() + ", flood counter: " + flood + ", prob counter: " + probabilistic);
 		write(output);
 	}
 

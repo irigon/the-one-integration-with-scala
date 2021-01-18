@@ -22,7 +22,7 @@ public class AdaptiveRouter extends ActiveRouter {
 	CompartmentSwitcher ca;
 	AbstractCompartment aCompartment;
 	Player adaptedRouter;
-	ArrayList<String> ctxt_list;
+	//ArrayList<String> ctxt_list;
 	Random rand;
 
 
@@ -31,17 +31,21 @@ public class AdaptiveRouter extends ActiveRouter {
 	public static final double I_TYP = 1800;
 	public static final double DEFAULT_BETA = 0.9;
 	public static final double DEFAULT_GAMMA = 0.999885791;
+	public static final double DEFAULT_WARMING_UP = 3600.0;
 	Random randomGenerator = new Random();
 	public static final String ADAPTIVE_NS = "AdaptiveRouter";
 	public static final String SECONDS_IN_UNIT_S ="secondsInTimeUnit";
 	public static final String BETA_S = "beta";
 	public static final String GAMMA_S = "gamma";
+	public static final String WARMING_UP_S = "warmingUp";
 	private int secondsInTimeUnit;
 	private double beta;
 	private double gamma;
+	private double warmingUp;
 	private HashMap<DTNHost, Double> preds;
 	private Map<DTNHost, Double> lastEncouterTime;
 	private double lastAgeUpdate;
+	private Collection<DTNHost> scheduleSet;
 
 	// counters
 	private int flood;
@@ -83,6 +87,13 @@ public class AdaptiveRouter extends ActiveRouter {
 		else {
 			gamma = DEFAULT_GAMMA;
 		}
+
+		if (adaptiveSettings.contains(WARMING_UP_S)) {
+			warmingUp = adaptiveSettings.getDouble(WARMING_UP_S);
+		}
+		else {
+			warmingUp = DEFAULT_WARMING_UP;
+		}
 		initialize_local_variables();
 		initEncTimes();
 	}
@@ -100,6 +111,7 @@ public class AdaptiveRouter extends ActiveRouter {
 		this.secondsInTimeUnit = r.secondsInTimeUnit;
 		this.beta = r.beta;
 		this.gamma = r.gamma;
+		this.warmingUp = r.warmingUp;
 		initialize_local_variables();
 		initEncTimes();
 	}
@@ -224,6 +236,7 @@ public class AdaptiveRouter extends ActiveRouter {
 	@Override
 	public void update() {
 		super.update();
+		update_node_set();
 		if (!canStartTransfer() ||isTransferring()) {
 			return; // transferring, don't try other connections yet
 		}
@@ -239,8 +252,14 @@ public class AdaptiveRouter extends ActiveRouter {
 	// during the first x hours learn the path
 	// After the learning phase, meeting with known devices results in predictive routing, otherwise epidemic
 	private String get_context(List<Connection> connections) {
-		String curr_ctxt = ctxt_list.get(rand.nextInt(ctxt_list.size()));
-		return curr_ctxt;
+		DTNHost h = getHost();
+		for (Connection c: connections)	{
+			DTNHost other = c.getOtherNode(h);
+			if (scheduleSet.contains(other) == false) {
+				return "naive_ctxt";
+			}
+		}
+		return "predictive_ctxt";
 	}
 
 	private Tuple<Message, Connection> tryOtherMessages() {
@@ -249,6 +268,7 @@ public class AdaptiveRouter extends ActiveRouter {
 		// choose a random context
 		// select available messages ordered by queue mode
 		// and call the role based on context to make the routing decision
+		List<Connection> connections = getConnections();
 		if (connectedAndReady()) {
 			this.sortByQueueMode(messages);
 		    // chose a context
@@ -261,11 +281,6 @@ public class AdaptiveRouter extends ActiveRouter {
 			// get active connections
 			for (Message m : messages) {
 				List candidates = aCompartment.route(adaptedRouter, m, preds, this.getHost());
-				if (preds.size() == candidates.size()) {
-					flood++;
-				} else {
-					probabilistic++;
-				}
 				//System.out.println(this.getHost() + ", flood:" + flood + ", prob:" + probabilistic);
 				// send message to the active connections that are present in the candidates set
 				for (Connection con : active_connections) {
@@ -282,6 +297,13 @@ public class AdaptiveRouter extends ActiveRouter {
 			}
 			if (messagesToSend.size() == 0) {
 				return null;
+			}
+			// increment the counter to the routing type responsible to forward this message
+			if (curr_ctxt == "naive_ctxt") {
+				System.out.println("Host " + getHost() + " chose naive");
+				flood++;
+			} else {
+				probabilistic++;
 			}
 		}
 		// sort the message-connection tuples
@@ -349,8 +371,9 @@ public class AdaptiveRouter extends ActiveRouter {
 	private void initialize_local_variables(){
 		ca = new CompartmentSwitcher();
 		rand = new Random();
-		ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt"));
+		//ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt"));
 		this.preds = new HashMap<DTNHost, Double>();
+		this.scheduleSet = new HashSet<DTNHost>();
 		flood = 0;
 		probabilistic = 0;
 	}
@@ -359,5 +382,16 @@ public class AdaptiveRouter extends ActiveRouter {
 	public Boolean connectedAndReady() {
 		List<Connection> connections = getConnections();
 		return (connections.size() > 0 && this.getNrofMessages() > 0);
+	}
+
+	public void update_node_set() {
+		List<Connection> connections = getConnections();
+		DTNHost h = getHost();
+		for (Connection c: connections)	{
+			DTNHost other = c.getOtherNode(h);
+			if (scheduleSet.contains(other) == false && SimClock.getTime() < warmingUp) {
+					scheduleSet.add(other);
+			}
+		}
 	}
 }

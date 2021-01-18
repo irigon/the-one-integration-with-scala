@@ -4,7 +4,6 @@
 
 ## Scenario settings
 #Scenario.name = default_scenario
-#Scenario.name = freiburg1True_router:%%Group.router%%_bSize:%%Group.bufferSize%%_Ttl:%%Group.msgTtl%%_Events1.size:%%Events1.size%%_endTime:%%Scenario.endTime%%_warmup:%%MovementModel.warmup%%_Events1.interval:%%Events1.interval%%_updateInt:%%Scenario.updateInterval%%_beta:%%ProphetV2Router.beta%%_gamma:%%ProphetV2Router.gamma%%
 Scenario.name = freiburgAdaptive
 
 Scenario.simulateConnections = true
@@ -74,7 +73,7 @@ Events.nrof = 1
 Events1.class = MessageEventGenerator
 # (following settings are specific for the MessageEventGenerator class)
 # Creation interval in seconds (one new message every 25 to 35 seconds)
-Events1.interval = 300
+Events1.interval = 120
 # Message sizes (500kB - 100MB)
 Events1.size = 5M
 # range of message source/destination addresses
