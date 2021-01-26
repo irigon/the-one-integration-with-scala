@@ -9,7 +9,8 @@ Scenario.name = freiburgAdaptive
 Scenario.simulateConnections = true
 Scenario.updateInterval = 1
 # 43200s == 12h
-Scenario.endTime = 14400
+#Scenario.endTime = 5000
+Scenario.endTime = 18000
 
 ## Interface-specific settings:
 # type : which interface class the interface belongs to
@@ -73,9 +74,9 @@ Events.nrof = 1
 Events1.class = MessageEventGenerator
 # (following settings are specific for the MessageEventGenerator class)
 # Creation interval in seconds (one new message every 25 to 35 seconds)
-Events1.interval = 120
+Events1.interval = 600
 # Message sizes (500kB - 100MB)
-Events1.size = 5M
+Events1.size = 1M
 # range of message source/destination addresses
 Events1.hosts = 0,20
 # Message ID prefix
@@ -120,7 +121,7 @@ Report.report7 = DeliveredMessagesReport
 Report.report8 = MessageDeliveryReport
 Report.report9 = NodeDensityReport
 Report.report9 = NodeDensityReport
-Report.report10 = RoutingChoiceReport
+Report.report10 = RoutingChoiceDetailedReport
 
 
 

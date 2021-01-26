@@ -31,7 +31,7 @@ public class AdaptiveRouter extends ActiveRouter {
 	public static final double I_TYP = 1800;
 	public static final double DEFAULT_BETA = 0.9;
 	public static final double DEFAULT_GAMMA = 0.999885791;
-	public static final double DEFAULT_WARMING_UP = 3600.0;
+	public static final double DEFAULT_WARMING_UP = 7200.0;
 	Random randomGenerator = new Random();
 	public static final String ADAPTIVE_NS = "AdaptiveRouter";
 	public static final String SECONDS_IN_UNIT_S ="secondsInTimeUnit";
@@ -48,21 +48,17 @@ public class AdaptiveRouter extends ActiveRouter {
 	private Collection<DTNHost> scheduleSet;
 
 	// counters
-	private int flood;
-	private int probabilistic;
+    private List<String> context_chosen_list;
 
 
 	// return a snapshot of the counters
-	public Tuple<Integer, Integer> routing_strategy_counters(){
-		Tuple<Integer, Integer> current_values = new Tuple<Integer, Integer> (flood, probabilistic);
-		reset_routing_strategy_counters();
-		return current_values;
+	public List<String> routing_strategy_counters(){
+		return context_chosen_list;
 	}
 
 	// reset the flooding and probabilistic counters
 	public void reset_routing_strategy_counters(){
-		flood = 0;
-		probabilistic = 0;
+		context_chosen_list.clear();
 	}
 
 	/**
@@ -253,66 +249,91 @@ public class AdaptiveRouter extends ActiveRouter {
 	// After the learning phase, meeting with known devices results in predictive routing, otherwise epidemic
 	private String get_context(List<Connection> connections) {
 		DTNHost h = getHost();
+        String ret = "naive_ctxt";
+        List<DTNHost> hosts = new ArrayList<DTNHost>();
 		for (Connection c: connections)	{
 			DTNHost other = c.getOtherNode(h);
-			if (scheduleSet.contains(other) == false) {
-				return "naive_ctxt";
-			}
+			if (scheduleSet.contains(other) == true) {
+                ret = "predictive_ctxt";
+                break;
+			} 
+            hosts.add(other);
 		}
-		return "predictive_ctxt";
+        //System.out.println(SimClock.getTime() + " - Host:" + h + ", Context: " + ret + ", Unknown hosts: " + hosts + ", known hosts:" + scheduleSet);
+        return ret;
 	}
 
+    private Tuple<Message, Connection> start_transmission(Message m, List<Connection>active_connections, List<DTNHost> candidates) {
+        for (Connection con : active_connections) {
+            DTNHost other = con.getOtherNode(getHost());
+            if (!candidates.contains(other)) {
+                continue;
+            }
+            AdaptiveRouter othRouter = (AdaptiveRouter)other.getRouter();
+            if (othRouter.isTransferring()) {
+                //System.out.println("Ja ta transferindo!");
+                continue; // skip hosts that are transferring
+            }
+            if (othRouter.hasMessage(m.getId())) {
+                continue; // skip messages that the other one has
+            }
+
+            // try to send the message
+            if (startTransfer(m, con) == RCV_OK) {
+                return (new Tuple<Message, Connection>(m,con));
+            }
+        }
+        return null;
+    }
+
 	private Tuple<Message, Connection> tryOtherMessages() {
-		List<Tuple<Message, Connection>> messagesToSend = new ArrayList<Tuple<Message, Connection>>();
 		List<Message> messages = new ArrayList<Message>(getMessageCollection());
+		Tuple<Message, Connection> ret = null;
+		List<Connection> active_connections = getConnections();
+		String curr_ctxt = get_context(active_connections); 
 		// choose a random context
 		// select available messages ordered by queue mode
 		// and call the role based on context to make the routing decision
-		List<Connection> connections = getConnections();
 		if (connectedAndReady()) {
 			this.sortByQueueMode(messages);
 		    // chose a context
-			List<Connection> active_connections = getConnections();
 			// select context
-        	String curr_ctxt = get_context(active_connections);
-        	//System.out.println("Contexto: " + curr_ctxt);
 			aCompartment = ca.activate(this, curr_ctxt);
 			adaptedRouter = aCompartment.adapt(this, curr_ctxt);
 			// get active connections
 			for (Message m : messages) {
 				List candidates = aCompartment.route(adaptedRouter, m, preds, this.getHost());
-				//System.out.println(this.getHost() + ", flood:" + flood + ", prob:" + probabilistic);
 				// send message to the active connections that are present in the candidates set
-				for (Connection con : active_connections) {
-					DTNHost other = con.getOtherNode(getHost());
-					AdaptiveRouter othRouter = (AdaptiveRouter)other.getRouter();
-					if (othRouter.isTransferring()) {
-						continue; // skip hosts that are transferring
-					}
-					if (othRouter.hasMessage(m.getId())) {
-						continue; // skip messages that the other one has
-					}
-					messagesToSend.add(new Tuple<Message, Connection>(m,con));
-				}
-			}
-			if (messagesToSend.size() == 0) {
-				return null;
-			}
-			// increment the counter to the routing type responsible to forward this message
-			if (curr_ctxt == "naive_ctxt") {
-				System.out.println("Host " + getHost() + " chose naive");
-				flood++;
-			} else {
-				probabilistic++;
-			}
-		}
-		// sort the message-connection tuples
-		Collections.sort(messagesToSend, new AdaptiveRouter.TupleComparator());
-		return tryMessagesForConnected(messagesToSend);	// try to send messages
+                ret = start_transmission(m, active_connections, candidates);
+                if (ret != null) {
+                    break;
+                }
+            }
+        }
+        String connected_devices = connected_neighbors_as_string_list(active_connections);
+        context_chosen_list.add(SimClock.getTime() + " " + getHost() + " " + curr_ctxt + " " + connected_devices);
+        return ret;
 	}
 
-	/**
-	 * Comparator for Message-Connection-Tuples that orders the tuples by
+	private String connected_neighbors_as_string_list(List<Connection> connections) {
+		Set neighbors = new HashSet<DTNHost>();
+		for (Connection c : connections) {
+		    DTNHost other = c.getOtherNode(getHost());
+			neighbors.add(other);
+		}
+		List<DTNHost> neighbors_list = new ArrayList<DTNHost>(neighbors);
+		String active_list = "[";
+		for (DTNHost n : neighbors_list) {
+			active_list += n.toString() + ",";
+		}
+		//active_list.substring(']',active_list.length() - 2);
+		active_list = active_list.substring(0, active_list.length()-1);
+		active_list += "]";
+		return active_list;
+	}
+
+/**
+ * Comparator for Message-Connection-Tuples that orders the tuples by
 	 * their delivery probability by the host on the other side of the
 	 * connection (GRTRMax)
 	 */
@@ -374,8 +395,7 @@ public class AdaptiveRouter extends ActiveRouter {
 		//ctxt_list = new ArrayList<String>(List.of("naive_ctxt","predictive_ctxt"));
 		this.preds = new HashMap<DTNHost, Double>();
 		this.scheduleSet = new HashSet<DTNHost>();
-		flood = 0;
-		probabilistic = 0;
+		context_chosen_list = new ArrayList<String>();
 	}
 
 	// Return true if node is connected and at least one message is available

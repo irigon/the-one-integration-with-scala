@@ -40,7 +40,7 @@ public abstract class Report {
 	public static final String PRECISION_SETTING = "precision";
 	/** Default precision of formatted double values */
 	public static final int DEF_PRECISION = 4;
-	/** The default output directory of reports (can be overridden per report
+	/** ihe default output directory of reports (can be overridden per report
 	 * with {@link Report#OUTPUT_SETTING}) -setting id ({@value})*/
 	public static final String REPORTDIR_SETTING = "Report.reportDir";
 	/** Warm up period -setting id ({@value}). Defines how many seconds from
