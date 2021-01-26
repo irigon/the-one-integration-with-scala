@@ -27,7 +27,7 @@ import util.Tuple;
 import routing.AdaptiveRouter;
 
 
-public class RoutingChoiceReport extends Report implements UpdateListener {
+public class RoutingChoiceDetailedReport extends Report implements UpdateListener {
 
 	/**
 	 * Record the number of times a routing approach eas chosen each n second -setting id ({@value}).
@@ -41,9 +41,9 @@ public class RoutingChoiceReport extends Report implements UpdateListener {
 	private int interval;
 
 	/**
-	 * Creates a new RoutingChoiceReport instance.
+	 * Creates a new RoutingChoiceDetailedReport instance.
 	 */
-	public RoutingChoiceReport() {
+	public RoutingChoiceDetailedReport() {
 		super();
 
 		Settings settings = getSettings();
@@ -70,21 +70,12 @@ public class RoutingChoiceReport extends Report implements UpdateListener {
 	 * @param hosts The list of hosts in the simulation
 	 */
 	private void printLine(List<DTNHost> hosts) {
-		Tuple<Integer, Integer>rcc;
-		int flood=0;
-		int probabilistic=0;
-
 		for (DTNHost h : hosts) {
 			AdaptiveRouter r = (AdaptiveRouter)h.getRouter();
-			//rcc = r.routing_strategy_counters();
-			//flood += rcc.getKey();
-			//probabilistic += rcc.getValue();
+			for (String line : r.routing_strategy_counters())
+				write(line);
+			r.reset_routing_strategy_counters();
 		}
-
-		String output = format(SimClock.getTime()) + " " + format(flood) + " " +
-				format(probabilistic);
-		//System.out.println("Time:" + SimClock.getTime() + ", flood counter: " + flood + ", prob counter: " + probabilistic);
-		write(output);
 	}
 
 }
